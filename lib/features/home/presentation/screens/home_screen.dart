@@ -1,4 +1,5 @@
 import 'package:bullymap/app/routes.dart';
+import 'package:bullymap/widgets/theme_switch.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -45,9 +46,18 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               mainAxisAlignment: .center,
               children: [
-                OutlinedButton(onPressed: _decrementCounter, child: const Text("Decrement")),
+                TextButton(onPressed: _decrementCounter, child: const Text("Decrement")),
                 SizedBox(width: 16),
                 ElevatedButton(onPressed: _incrementCounter, child: const Text("Increment"))
+              ],
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: .center,
+              children: [
+                const Text("Theme Switch"),
+                SizedBox(width: 16),
+                ThemeSwitch()
               ],
             )
           ],

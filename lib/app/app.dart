@@ -1,4 +1,7 @@
 import 'package:bullymap/app/router.dart';
+import 'package:bullymap/core/theme/dark_theme.dart';
+import 'package:bullymap/core/theme/light_theme.dart';
+import 'package:bullymap/core/theme/theme_controller.dart';
 import 'package:flutter/material.dart';
 
 class MainApp extends StatelessWidget {
@@ -6,10 +9,17 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: "Bully Map",
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      routerConfig: appRouter,
+    return ValueListenableBuilder(
+      valueListenable: ThemeController.themeMode,
+      builder: (context, value, child) {
+        return MaterialApp.router(
+          title: "Bully Map",
+          theme: LightTheme.theme,
+          darkTheme: DarkTheme.theme,
+          themeMode: value,
+          routerConfig: appRouter
+        );
+      }
     );
   }
 }
