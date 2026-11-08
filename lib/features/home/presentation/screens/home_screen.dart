@@ -1,7 +1,7 @@
 import 'package:bullymap/app/routes.dart';
-import 'package:bullymap/widgets/theme_switch.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class HomeScreen extends StatefulWidget {
   final String title;
@@ -18,50 +18,25 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _count = 0;
+  // SAMPLE LNG AND LATITUDE (Will be deleted or removed during development.)
+  final num _longitude = 123.8854;
+  final num _latitude = 10.3157;
 
-  void _incrementCounter() {
-    setState(() {
-      _count++;
-    });
+  void _onMapCreated(MapboxMap map) {
+    map.scaleBar.updateSettings(ScaleBarSettings(enabled: false));
   }
 
-  void _decrementCounter() {
-    setState(() {
-      _count--;
-    });
-  }
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: .center,
-          children: [
-            Text("$_count", style: Theme.of(context).textTheme.displayLarge),
-            SizedBox(height: 16),
-            const Text("Hello world ;D"),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: .center,
-              children: [
-                TextButton(onPressed: _decrementCounter, child: const Text("Decrement")),
-                SizedBox(width: 16),
-                ElevatedButton(onPressed: _incrementCounter, child: const Text("Increment"))
-              ],
-            ),
-            SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: .center,
-              children: [
-                const Text("Theme Switch"),
-                SizedBox(width: 16),
-                ThemeSwitch()
-              ],
-            )
-          ],
+      body: MapWidget(
+        viewport: CameraViewportState(
+          center: Point(coordinates: Position(_longitude, _latitude)),
+          zoom: 12,
+          pitch: 0,
+          bearing: 0
         ),
+        onMapCreated: _onMapCreated,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Padding(
