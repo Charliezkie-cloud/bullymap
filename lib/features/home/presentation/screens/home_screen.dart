@@ -3,6 +3,7 @@ import 'package:bullymap/features/home/presentation/widgets/main_map.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_action_buttons.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_search_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,6 +22,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // States
   bool _isLoadingLocation = false;
   bool _wasKeyboardVisible = false;
+  double _mapBearing = 0;
+  bool _showCompass = false;
 
   // Methods
   Future<void> _recenterMap() async {
@@ -81,6 +84,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     debugPrint('Latitude: $latitude');
   }
 
+  Future<void> _onCameraChanged(CameraChangedEventData data,) async {
+    final map = MapController.map.value;
+
+    if (map == null) return;
+    final cameraState = await map.getCameraState();
+
+    if (!mounted) return;
+    final bearing = cameraState.bearing;
+
+    setState(() {
+      _mapBearing = bearing;
+      _showCompass = bearing.abs() > 0.5;
+    });
+  }
+
+  Future<void> _resetCompass() async {
+    final map = MapController.map.value;
+
+    if (map == null) return;
+
+    await map.easeTo(
+      CameraOptions(bearing: 0),
+      MapAnimationOptions(duration: 500)
+    );
+  }
+
   // Widget methods
   @override
   void initState() {
@@ -115,7 +144,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         fit: .expand,
         children: [
           Positioned.fill(
-            child: MainMap(onPermissionPermanentlyDenied: _showPermissionDialog),
+            child: MainMap(
+              onPermissionPermanentlyDenied: _showPermissionDialog,
+              onCameraChangedListener: _onCameraChanged,
+            )
           ),
           
           SafeArea(
@@ -132,6 +164,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               onRecenter: _recenterMap,
               onDirections: () => debugPrint('Directions pressed'),
               isLoading: _isLoadingLocation,
+
+              onCompassPressed: _resetCompass,
+              bearing: _mapBearing,
+              showCompass: _showCompass
             ),
           ),
         ]

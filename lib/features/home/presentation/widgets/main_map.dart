@@ -6,10 +6,12 @@ import 'package:permission_handler/permission_handler.dart';
 
 class MainMap extends StatefulWidget {
   final VoidCallback onPermissionPermanentlyDenied;
+  final OnCameraChangeListener onCameraChangedListener;
   
   const MainMap({
     super.key,
-    required this.onPermissionPermanentlyDenied
+    required this.onPermissionPermanentlyDenied,
+    required this.onCameraChangedListener
   });
 
   @override
@@ -26,6 +28,7 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     MapController.map.value = map;
 
     map.scaleBar.updateSettings(.new(enabled: false));
+    map.compass.updateSettings(CompassSettings(enabled: false));
     
     _updateMapTheme();
     _requestLocationPermission();
@@ -121,7 +124,8 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
       styleUri: MapboxStyles.STANDARD,
       viewport: CameraViewportState(zoom: 11, pitch: 0, bearing: 0),
       viewportController: _viewportController,
-      onMapCreated: _onMapCreated
+      onMapCreated: _onMapCreated,
+      onCameraChangeListener: widget.onCameraChangedListener
     );
   }
 }
