@@ -1,5 +1,6 @@
 import 'package:bullymap/app/routes.dart';
 import 'package:bullymap/features/home/presentation/widgets/main_map.dart';
+import 'package:bullymap/features/home/presentation/widgets/map_search_bar.dart';
 import 'package:bullymap/widgets/navigation_floating_buttons.dart';
 import 'package:flutter/material.dart';
 
@@ -16,15 +17,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
-  
-  // Widget methods
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          MainMap()
+          MainMap(),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 12, left: 16, right: 16),
+              child: const MapSearchBar(),
+            )
+          )
         ]
       ),
       floatingActionButtonLocation: .centerFloat,

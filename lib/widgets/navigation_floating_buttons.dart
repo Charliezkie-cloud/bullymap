@@ -6,7 +6,6 @@ class NavigationFloatingButtons extends StatelessWidget {
   final bool _hasPrevious;
   final bool _hasNext;
 
-
   const NavigationFloatingButtons({
     super.key,
     required this._pushRoute,
@@ -26,7 +25,9 @@ class NavigationFloatingButtons extends StatelessWidget {
               heroTag: 'fab-left',
               onPressed: () => context.pop(),
               child: const Icon(Icons.arrow_back),
-            ),
+            )
+          else
+            const SizedBox.shrink(),
           if (_hasNext)
             FloatingActionButton(
               heroTag: 'fab-right',
