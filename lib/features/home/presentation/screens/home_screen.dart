@@ -88,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButtonLocation: .endFloat,
       floatingActionButton: Align(
-        alignment: Alignment.bottomRight,
+        alignment: .bottomRight,
         child: MapActionButtons(
           onRecenter: _recenterMap,
           onDirections: () => debugPrint('Directions pressed'),
