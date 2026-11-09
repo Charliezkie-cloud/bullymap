@@ -1,5 +1,3 @@
-import "dart:io";
-
 import "package:bullymap/app/app.dart";
 import "package:bullymap/core/config/env.dart";
 import "package:flutter/foundation.dart";

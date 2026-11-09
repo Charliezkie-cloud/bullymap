@@ -1,6 +1,6 @@
 import 'package:bullymap/app/routes.dart';
+import 'package:bullymap/widgets/navigation_floating_buttons.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class NavigationScreen extends StatefulWidget {
   final String title;
@@ -11,9 +11,7 @@ class NavigationScreen extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() {
-    return _NavigationScreenState();
-  }
+  State<StatefulWidget> createState() => _NavigationScreenState();
 }
 
 class _NavigationScreenState extends State<NavigationScreen> {
@@ -23,25 +21,8 @@ class _NavigationScreenState extends State<NavigationScreen> {
       body: Center(
         child: const Text("This is the navigation screen"),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            FloatingActionButton(
-              heroTag: 'fab-left',
-              onPressed: () => context.pop(),
-              child: const Icon(Icons.arrow_back),
-            ),
-            FloatingActionButton(
-              heroTag: 'fab-right',
-              onPressed: () => context.push(Routes.settings),
-              child: const Icon(Icons.arrow_forward),
-            ),
-          ],
-        ),
-      )
+      floatingActionButtonLocation: .centerFloat,
+      floatingActionButton: const NavigationFloatingButtons(pushRoute: Routes.settings)
     );
   }
 }

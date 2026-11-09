@@ -1,6 +1,6 @@
 import 'package:bullymap/app/routes.dart';
+import 'package:bullymap/widgets/navigation_floating_buttons.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 class IntroScreen extends StatefulWidget {
   final String title;
@@ -11,9 +11,7 @@ class IntroScreen extends StatefulWidget {
   });
 
   @override
-  State<StatefulWidget> createState() {
-    return _IntroScreenState();
-  }
+  State<StatefulWidget> createState() => _IntroScreenState();
 }
 
 class _IntroScreenState extends State<IntroScreen> {
@@ -28,10 +26,8 @@ class _IntroScreenState extends State<IntroScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(Routes.home),
-        child: const Icon(Icons.arrow_forward),
-      ),
+      floatingActionButtonLocation: .centerFloat,
+      floatingActionButton: const NavigationFloatingButtons(pushRoute: Routes.home, hasPrevious: false)
     );
   }
 }
