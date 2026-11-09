@@ -17,9 +17,10 @@ class HomeScreen extends StatefulWidget {
   State<StatefulWidget> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {  
   // States
   bool _isLoadingLocation = false;
+  bool _wasKeyboardVisible = false;
 
   // Methods
   Future<void> _recenterMap() async {
@@ -69,32 +70,72 @@ class _HomeScreenState extends State<HomeScreen> {
       },
     );
   }
-  
+
+  void _onMapSearch(Map<String, dynamic> feature) {
+    final coordinates = feature['geometry']['coordinates'];
+
+    final longitude = (coordinates[0] as num).toDouble();
+    final latitude = (coordinates[1] as num).toDouble();
+
+    debugPrint('Longitude: $longitude');
+    debugPrint('Latitude: $latitude');
+  }
+
   // Widget methods
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void didChangeMetrics() {
+    final isKeyboardVisible = View.of(context).viewInsets.bottom > 0;
+
+    if (_wasKeyboardVisible && !isKeyboardVisible) {
+      FocusManager.instance.primaryFocus?.unfocus();
+    }
+
+    _wasKeyboardVisible = isKeyboardVisible;
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: Stack(
+        fit: .expand,
         children: [
-          MainMap(onPermissionPermanentlyDenied: _showPermissionDialog),
+          Positioned.fill(
+            child: MainMap(onPermissionPermanentlyDenied: _showPermissionDialog),
+          ),
           
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(top: 12, left: 16, right: 16),
-              child: const MapSearchBar(),
+              child: MapSearchBar(onLocationSelected: _onMapSearch),
             )
           ),
+
+          Positioned(
+            right: 16,
+            bottom: keyboardHeight + 16,
+            child: MapActionButtons(
+              onRecenter: _recenterMap,
+              onDirections: () => debugPrint('Directions pressed'),
+              isLoading: _isLoadingLocation,
+            ),
+          ),
         ]
-      ),
-      floatingActionButtonLocation: .endFloat,
-      floatingActionButton: Align(
-        alignment: .bottomRight,
-        child: MapActionButtons(
-          onRecenter: _recenterMap,
-          onDirections: () => debugPrint('Directions pressed'),
-          isLoading: _isLoadingLocation
-        ),
-      ),
+      )
     );
   }
 }
