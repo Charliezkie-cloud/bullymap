@@ -1,4 +1,5 @@
 import 'package:bullymap/core/theme/theme_controller.dart';
+import 'package:bullymap/features/home/controllers/map_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
@@ -10,15 +11,12 @@ class MainMap extends StatefulWidget {
 }
 
 class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
-  // States
-  MapboxMap? _map;
-
   final num _longitude = 123.8854;
   final num _latitude = 10.3157;
   
   // Map methods
   void _onMapCreated(MapboxMap map) {
-    _map = map;
+    MapController.map.value = map;
 
     map.scaleBar.updateSettings(.new(enabled: false));
     _updateMapTheme();
@@ -29,7 +27,7 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     final isDarkPlatformBrightness = themeMode == ThemeMode.system && WidgetsBinding.instance.platformDispatcher.platformBrightness == Brightness.dark;
     final isDark = themeMode == .dark || isDarkPlatformBrightness;
 
-    _map?.loadStyleURI(isDark ? MapboxStyles.DARK : MapboxStyles.STANDARD);
+    MapController.map.value?.loadStyleURI(isDark ? MapboxStyles.DARK : MapboxStyles.STANDARD);
   }
 
   // Widget methods
