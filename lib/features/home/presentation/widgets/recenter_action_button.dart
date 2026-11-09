@@ -14,7 +14,11 @@ class RecenterActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return FloatingActionButton(
       onPressed: isLoading ? null : onPressed,
-      child: isLoading ? const CircularProgressIndicator() : const Icon(Icons.my_location),
+      child: !isLoading ? const Icon(Icons.my_location) : SizedBox(
+        height: 26,
+        width: 26,
+        child: const CircularProgressIndicator(strokeWidth: 3)
+      )
     );
   }
 }

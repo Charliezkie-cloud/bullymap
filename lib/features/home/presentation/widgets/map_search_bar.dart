@@ -1,4 +1,4 @@
-  import 'dart:async';
+import 'dart:async';
 
 import 'package:bullymap/features/home/data/services/location_search_service.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +15,7 @@ class MapSearchBar extends StatefulWidget {
   State<StatefulWidget> createState() => _MapSearchBarState();
 }
 
-class _MapSearchBarState extends State<MapSearchBar> {
+class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMixin {
   // Constants
   final LocationSearchService _locationSearchService = LocationSearchService();
   final TextEditingController _editingController = TextEditingController();
@@ -115,9 +115,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
                     child: SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   ),
                 ),
@@ -148,40 +146,50 @@ class _MapSearchBarState extends State<MapSearchBar> {
           ),
         ),
 
-        if (_suggestions.isNotEmpty)
-          Container(
-            margin: const EdgeInsets.only(top: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  blurRadius: 8,
-                  color: Colors.black12,
-                ),
-              ],
-            ),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _suggestions.length,
-              separatorBuilder: (a, b) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final suggestion = _suggestions[index];
+        AnimatedSize(
+          duration: const Duration(milliseconds: 300),
+          reverseDuration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOutCubic,
+          alignment: Alignment.topCenter,
+          child: _suggestions.isNotEmpty
+              ? Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [
+                      BoxShadow(
+                        blurRadius: 8,
+                        color: Colors.black12,
+                      ),
+                    ],
+                  ),
 
-                return ListTile(
-                  leading: const Icon(Icons.location_on_outlined),
-                  title: Text(
-                    suggestion['name'] ?? '',
-                  ),
-                  subtitle: Text(
-                    suggestion['place_formatted'] ?? '',
-                  ),
-                  onTap: () => _selectLocation(suggestion),
-                );
-              },
-            ),
-          ),
+                  child: Material(
+                        child: ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _suggestions.length,
+                        separatorBuilder: (a, b) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final suggestion = _suggestions[index];
+
+                          return ListTile(
+                            leading: const Icon(Icons.location_on_outlined),
+                            title: Text(
+                              suggestion['name'] ?? '',
+                            ),
+                            subtitle: Text(
+                              suggestion['place_formatted'] ?? '',
+                            ),
+                            onTap: () => _selectLocation(suggestion),
+                          );
+                        },
+                      ),
+                    ),
+                  )
+              : const SizedBox.shrink(),
+        ),
       ]
     );
   }
