@@ -1,5 +1,3 @@
-import 'package:bullymap/app/routes.dart';
-import 'package:bullymap/widgets/navigation_floating_buttons.dart';
 import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -21,8 +19,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: Center(
         child: const Text("This is the settings screen"),
       ),
-      floatingActionButtonLocation: .centerFloat,
-      floatingActionButton: const NavigationFloatingButtons(pushRoute: Routes.intro)
     );
   }
 }
