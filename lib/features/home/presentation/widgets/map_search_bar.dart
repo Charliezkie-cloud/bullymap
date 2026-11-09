@@ -16,12 +16,15 @@ class _MapSearchBarState extends State<MapSearchBar> {
       clipBehavior: Clip.antiAlias,
       child: TextField(
         decoration: .new(
-          hintText: "Search here",
+          hintText: "Search here...",
           
           prefixIcon: const Icon(Icons.search),
-          suffixIcon: IconButton(
-            onPressed: () => debugPrint("Hello world from MapSearchBar widget"),
-            icon: const Icon(Icons.mic)
+          suffixIcon: Padding(
+            padding: .only(right: 8),
+            child: IconButton(
+              onPressed: () => debugPrint("Hello world from MapSearchBar widget"),
+              icon: const Icon(Icons.mic)
+            )
           ),
           
           filled: true,
