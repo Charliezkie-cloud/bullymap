@@ -30,10 +30,12 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
   List<Map<String, dynamic>> _suggestions = [];
   bool _isLoading = false;
   bool _isListening = false;
+  int _searchId = 0;
 
   // Methods
   void _onSearchChanged(String query) {
     _debounce?.cancel();
+    final id = ++_searchId;
 
     if (query.trim().length < 2) {
       setState(() {
@@ -44,12 +46,14 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
     }
 
     _debounce = Timer(const Duration(milliseconds: 500), () async {
+        if (!mounted) return;
+
         setState(() => _isLoading = true);
 
         try {
           final results = await _locationSearchService.searchLocations(query);
 
-          if (!mounted) return;
+          if (!mounted || id != _searchId) return;
 
           setState(() {
             _suggestions = results;
@@ -58,7 +62,7 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
         } catch (e) {
           debugPrint('Location search error: $e');
           
-          if (!mounted) return;
+          if (!mounted || id != _searchId) return;
 
           setState(() {
             _suggestions = [];
@@ -70,19 +74,24 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
   }
 
   Future<void> _selectLocation(Map<String, dynamic> suggestion) async {
+    _debounce?.cancel();
+    _searchId++;
+    
+    if (_isListening) await _stopListening();
+    if (!mounted) return;
+
+    FocusScope.of(context).unfocus();
+    _editingController.text = suggestion['name'] ?? '';
+    setState(() {
+      _suggestions = [];
+      _isLoading = false;
+    });
+
     try {
       final feature = await _locationSearchService.retrieveLocation(
         suggestion['mapbox_id'],
       );
-
       if (!mounted) return;
-
-      setState(() {
-        _suggestions = [];
-      });
-
-      _editingController.text = suggestion['name'] ?? '';
-
       widget.onLocationSelected(feature);
     } catch (e) {
       debugPrint('Location retrieval error: $e');
@@ -150,6 +159,8 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
   }
 
   void _onSpeechResult(SpeechRecognitionResult result) {
+    if (!_isListening) return; 
+
     final words = result.recognizedWords;
 
     _editingController.text = words;
@@ -217,7 +228,7 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
                 padding: const EdgeInsets.only(right: 8),
                 child: !_isLoading ? IconButton(
                   onPressed: _onMicPressed,
-                  icon: _isLoading ? const Icon(Icons.mic) : const Icon(Icons.mic_off),
+                  icon: Icon(_isListening ? Icons.mic : Icons.mic_off),
                   color: _isListening ? Colors.redAccent : null,
                 ) : const SizedBox(
                   width: 40,

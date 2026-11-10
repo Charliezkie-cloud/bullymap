@@ -80,8 +80,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final longitude = (coordinates[0] as num).toDouble();
     final latitude = (coordinates[1] as num).toDouble();
 
-    debugPrint('Longitude: $longitude');
-    debugPrint('Latitude: $latitude');
+    MapController.viewportController?.moveTo(
+      CameraViewportState(
+        center: Point(
+          coordinates: Position(longitude, latitude),
+        ),
+        zoom: 16,
+      ),
+      transition: const FlyViewportTransition(
+        duration: Duration(milliseconds: 1000),
+      ),
+    );
   }
 
   Future<void> _onCameraChanged(CameraChangedEventData data,) async {

@@ -11,7 +11,7 @@ class DirectionsActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton(
-      heroTag: 'directions-button',
+      heroTag: null,
       onPressed: onPressed,
       child: const Icon(Icons.directions),
     );
