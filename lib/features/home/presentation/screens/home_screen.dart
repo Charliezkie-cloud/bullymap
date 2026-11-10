@@ -36,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
       if (!mounted) return;
 
-      _showPermissionDialog();
+      _showLocationPermissionDialog();
     } finally {
       if (mounted) {
         setState(() => _isLoadingLocation = false);
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _showPermissionDialog() {
+  void _showLocationPermissionDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -145,7 +145,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         children: [
           Positioned.fill(
             child: MainMap(
-              onPermissionPermanentlyDenied: _showPermissionDialog,
+              onPermissionPermanentlyDenied: _showLocationPermissionDialog,
               onCameraChangedListener: _onCameraChanged,
             )
           ),

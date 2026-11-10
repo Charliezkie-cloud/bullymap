@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:bullymap/features/home/data/services/location_search_service.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 class MapSearchBar extends StatefulWidget { 
   final ValueChanged<Map<String, dynamic>> onLocationSelected;
@@ -19,11 +23,13 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
   // Constants
   final LocationSearchService _locationSearchService = LocationSearchService();
   final TextEditingController _editingController = TextEditingController();
+  final SpeechToText _speech = SpeechToText();
   
   // States
   Timer? _debounce;
   List<Map<String, dynamic>> _suggestions = [];
   bool _isLoading = false;
+  bool _isListening = false;
 
   // Methods
   void _onSearchChanged(String query) {
@@ -71,22 +77,126 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
 
       if (!mounted) return;
 
-      // Clear search results.
       setState(() {
         _suggestions = [];
       });
 
-      // Put the selected location in the search field.
       _editingController.text = suggestion['name'] ?? '';
 
-      // Notify the parent widget.
       widget.onLocationSelected(feature);
     } catch (e) {
       debugPrint('Location retrieval error: $e');
     }
   }
 
+  Future<void> _onMicPressed() async {
+    if (_isListening) {
+      await _stopListening();
+      return;
+    }
+
+    if (!await _requestSpeechPermissions()) {
+      if (mounted) _showSpeechPermissionDialog();
+      return;
+    }
+
+    final granted = await _speech.initialize(
+      onStatus: (status) {
+        if ((status == 'done' || status == 'notListening') && mounted) {
+          setState(() => _isListening = false);
+        }
+      },
+      onError: (error) {
+        debugPrint('Speech error: ${error.errorMsg}');
+        if (mounted) setState(() => _isListening = false);
+      },
+    );
+
+    if (!mounted) return;
+    if (!granted) {
+      _showSpeechPermissionDialog();
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() => _isListening = true);
+
+    await _speech.listen(
+      onResult: _onSpeechResult,
+      listenOptions: SpeechListenOptions(
+        listenMode: ListenMode.search,
+        partialResults: true,
+        cancelOnError: true,
+        listenFor: const Duration(seconds: 30),
+        pauseFor: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> _stopListening() async {
+    await _speech.stop();
+    if (mounted) setState(() => _isListening = false);
+  }
+
+  Future<bool> _requestSpeechPermissions() async {
+    final mic = await Permission.microphone.request();
+    if (!mic.isGranted) return false;
+
+    if (Platform.isIOS) {
+      final speech = await Permission.speech.request();
+      if (!speech.isGranted) return false;
+    }
+    return true;
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    final words = result.recognizedWords;
+
+    _editingController.text = words;
+    _editingController.selection = TextSelection.collapsed(offset: words.length);
+
+    _onSearchChanged(words);
+  }
+
+  void _showSpeechPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Microphone Permission Required'),
+          content: const Text(
+            'BullyMap needs access to your microphone and speech '
+            'recognition to search places by voice. Please enable '
+            'the permission in your application settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await openAppSettings();
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Widget methods
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _speech.cancel();
+    _editingController.dispose(); 
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -101,13 +211,14 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
             onChanged: _onSearchChanged,
             decoration: .new(
               hintText: "Search here...",
-              
+
               prefixIcon: const Icon(Icons.search),
               suffixIcon: Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: !_isLoading ? IconButton(
-                  onPressed: () => debugPrint("Microphone pressed"),
-                  icon: const Icon(Icons.mic),
+                  onPressed: _onMicPressed,
+                  icon: _isLoading ? const Icon(Icons.mic) : const Icon(Icons.mic_off),
+                  color: _isListening ? Colors.redAccent : null,
                 ) : const SizedBox(
                   width: 40,
                   height: 48,
