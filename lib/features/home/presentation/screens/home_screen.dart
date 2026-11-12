@@ -1,4 +1,5 @@
 import 'package:bullymap/features/home/controllers/map_controller.dart';
+import 'package:bullymap/features/home/models/location_suggestion.dart';
 import 'package:bullymap/features/home/models/pinned_location.dart';
 import 'package:bullymap/features/home/presentation/widgets/location_details_sheet.dart';
 import 'package:bullymap/features/home/presentation/widgets/main_map.dart';
@@ -31,31 +32,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _showLocationSheet = false;
 
   // Methods
-  void _onMapSearch(Map<String, dynamic> feature) {
-    final coords = feature['geometry']?['coordinates'] as List?;
-    if (coords == null || coords.length < 2) return;
+  void _onMapSearchBarSelected(PinnedLocation location) {
+    final point = Point(coordinates: Position(location.longitude, location.latitude),);
 
-    final lng = (coords[0] as num).toDouble();
-    final lat = (coords[1] as num).toDouble();
-    final props = feature['properties'] as Map<String, dynamic>?;
-
-    MapController.dropPin?.call(
-      Point(coordinates: Position(lng, lat)),
-      location: PinnedLocation(
-        name: props?['name'] ?? 'Selected place',
-        address: props?['full_address'] ?? props?['place_formatted'] ?? '',
-        latitude: lat,
-        longitude: lng,
-      ),
-    );
-
+    MapController.dropPin?.call(point, location: location);
     MapController.viewportController?.moveTo(
-      CameraViewportState(
-        center: Point(
-          coordinates: Position(lng, lat),
-        ),
-        zoom: 16,
-      ),
+      CameraViewportState(center: point, zoom: 16),
       transition: const FlyViewportTransition(
         duration: Duration(milliseconds: 1000),
       ),
@@ -206,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(top: 12, left: 16, right: 16),
-              child: MapSearchBar(onLocationSelected: _onMapSearch),
+              child: MapSearchBar(onLocationSelected: _onMapSearchBarSelected),
             )
           ),
 
