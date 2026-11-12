@@ -1,4 +1,6 @@
 import 'package:bullymap/features/home/controllers/map_controller.dart';
+import 'package:bullymap/features/home/models/pinned_location.dart';
+import 'package:bullymap/features/home/presentation/widgets/location_details_sheet.dart';
 import 'package:bullymap/features/home/presentation/widgets/main_map.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_action_buttons.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_search_bar.dart';
@@ -20,28 +22,44 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {  
   // States
+  PinnedLocation? _selectedLocation;
+  double _mapBearing = 0;
   bool _isLoadingLocation = false;
   bool _wasKeyboardVisible = false;
-  double _mapBearing = 0;
   bool _showCompass = false;
+  bool _isLoadingPlace = false;
+  bool _showLocationSheet = false;
 
   // Methods
-  Future<void> _recenterMap() async {
-    setState(() => _isLoadingLocation = true);
+  void _onMapSearch(Map<String, dynamic> feature) {
+    final coordinates = feature['geometry']['coordinates'];
 
-    try {
-      await MapController.goToCurrentLocation();
-    } catch (e) {
-      debugPrint('Location error: $e');
+    final longitude = (coordinates[0] as num).toDouble();
+    final latitude = (coordinates[1] as num).toDouble();
 
-      if (!mounted) return;
+    MapController.viewportController?.moveTo(
+      CameraViewportState(
+        center: Point(
+          coordinates: Position(longitude, latitude),
+        ),
+        zoom: 16,
+      ),
+      transition: const FlyViewportTransition(
+        duration: Duration(milliseconds: 1000),
+      ),
+    );
+  }
 
-      _showLocationPermissionDialog();
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingLocation = false);
-      }
-    }
+  void _onLocationSelected(PinnedLocation location) {
+    setState(() {
+      _selectedLocation = location;
+      _isLoadingPlace = false;
+      _showLocationSheet = true;
+    });
+  }
+
+  void _startNavigation(PinnedLocation location) {
+    debugPrint('Navigate to ${location.name}');
   }
 
   void _showLocationPermissionDialog() {
@@ -74,23 +92,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _onMapSearch(Map<String, dynamic> feature) {
-    final coordinates = feature['geometry']['coordinates'];
+  void _onLocationLoading() {
+    setState(() {
+      _showLocationSheet = true;
+      _isLoadingPlace = true;
+      _selectedLocation = null;
+    });
+  }
 
-    final longitude = (coordinates[0] as num).toDouble();
-    final latitude = (coordinates[1] as num).toDouble();
-
-    MapController.viewportController?.moveTo(
-      CameraViewportState(
-        center: Point(
-          coordinates: Position(longitude, latitude),
-        ),
-        zoom: 16,
-      ),
-      transition: const FlyViewportTransition(
-        duration: Duration(milliseconds: 1000),
-      ),
-    );
+  void _closeLocationSheet() {
+    setState(() => _showLocationSheet = false);
+    MapController.clearPin();
   }
 
   Future<void> _onCameraChanged(CameraChangedEventData data,) async {
@@ -106,6 +118,24 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _mapBearing = bearing;
       _showCompass = bearing.abs() > 0.5;
     });
+  }
+
+  Future<void> _recenterMap() async {
+    setState(() => _isLoadingLocation = true);
+
+    try {
+      await MapController.goToCurrentLocation();
+    } catch (e) {
+      debugPrint('Location error: $e');
+
+      if (!mounted) return;
+
+      _showLocationPermissionDialog();
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingLocation = false);
+      }
+    }
   }
 
   Future<void> _resetCompass() async {
@@ -127,6 +157,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   void didChangeMetrics() {
     final isKeyboardVisible = View.of(context).viewInsets.bottom > 0;
 
@@ -135,12 +171,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
 
     _wasKeyboardVisible = isKeyboardVisible;
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
   }
 
   @override
@@ -156,6 +186,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: MainMap(
               onPermissionPermanentlyDenied: _showLocationPermissionDialog,
               onCameraChangedListener: _onCameraChanged,
+              onLocationLoading: _onLocationLoading,
+              onLocationSelected: _onLocationSelected,
             )
           ),
           
@@ -169,14 +201,49 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Positioned(
             right: 16,
             bottom: keyboardHeight + 16,
-            child: MapActionButtons(
-              onRecenter: _recenterMap,
-              onDirections: () => debugPrint('Directions pressed'),
-              isLoading: _isLoadingLocation,
+            child:  AnimatedSlide(
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOutCubic,
+              
+              offset: _showLocationSheet ? const Offset(1.5, 0) : Offset.zero,
 
-              onCompassPressed: _resetCompass,
-              bearing: _mapBearing,
-              showCompass: _showCompass
+              child: IgnorePointer(
+                ignoring: _showLocationSheet,
+
+                child: MapActionButtons(
+                  onRecenter: _recenterMap,
+                  onDirections: () => debugPrint('Directions pressed'),
+                  isLoading: _isLoadingLocation,
+                  onCompassPressed: _resetCompass,
+                  bearing: _mapBearing,
+                  showCompass: _showCompass,
+                ),
+              ),
+            ),
+          ),
+
+          AnimatedSlide(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOutCubic,
+            offset: _showLocationSheet ? Offset.zero : const Offset(0, 1),
+            child: IgnorePointer(
+              ignoring: !_showLocationSheet,
+              child: DraggableScrollableSheet(
+                initialChildSize: 0.20,
+                minChildSize: 0.20,
+                maxChildSize: 0.50,
+                snap: true,
+                snapSizes: const [0.28, 0.50],
+                builder: (context, scrollController) {
+                  return LocationDetailsSheet(
+                    location: _selectedLocation,
+                    isLoading: _isLoadingPlace,
+                    scrollController: scrollController,
+                    onClose: _closeLocationSheet,
+                    onStartNavigation: _startNavigation,
+                  );
+                },
+              ),
             ),
           ),
         ]

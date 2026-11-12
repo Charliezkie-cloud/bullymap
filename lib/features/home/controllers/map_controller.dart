@@ -4,9 +4,12 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class MapController {
   static final ValueNotifier<MapboxMap?> map = ValueNotifier(null);
+  static final ValueNotifier<Point?> pinnedPoint = ValueNotifier(null);
 
   static ViewportController? viewportController;
 
+  static void clearPin() => pinnedPoint.value = null;
+  
   static Future<void> goToCurrentLocation() async {
     final position = await LocationService.getCurrentLocation();
     final currentMap = map.value;
