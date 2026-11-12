@@ -76,20 +76,7 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     if (MapController.pinnedPoint.value == null) _clearPin();
   }
 
-  Future<void> _onStyleLoaded(StyleLoadedEventData _) async {
-    final map = MapController.map.value;
-    if (map == null) return;
-
-    _pinManager ??= await map.annotations.createPointAnnotationManager();
-
-    final point = MapController.pinnedPoint.value;
-
-    if (point != null && _pin == null) {
-      await _renderPin(point);
-    }
-  }
-
-  Future<void> _dropPin(Point point) async {
+  Future<void> _dropPin(Point point, {PinnedLocation? location}) async {
     HapticFeedback.mediumImpact();
 
     final requestId = ++_geocodingRequestId;
@@ -97,13 +84,19 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     final longitude = point.coordinates.lng.toDouble();
 
     MapController.pinnedPoint.value = point;
-    widget.onLocationLoading();
+    if (location == null) widget.onLocationLoading();
 
     await _renderPin(point);
     await MapController.map.value?.easeTo(
       CameraOptions(center: point, zoom: 16),
       MapAnimationOptions(duration: 300),
     );
+
+    if (location != null) {
+      if (!mounted || requestId != _geocodingRequestId) return;
+      widget.onLocationSelected(location);
+      return;
+    }
 
     try {
       final location = await LocationService.reverseGeocode(latitude: latitude, longitude: longitude);
@@ -150,6 +143,19 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
         iconAnchor: IconAnchor.BOTTOM,
       ),
     );
+  }
+
+  Future<void> _onStyleLoaded(StyleLoadedEventData _) async {
+    final map = MapController.map.value;
+    if (map == null) return;
+
+    _pinManager ??= await map.annotations.createPointAnnotationManager();
+
+    final point = MapController.pinnedPoint.value;
+
+    if (point != null && _pin == null) {
+      await _renderPin(point);
+    }
   }
 
   Future<void> _requestLocationPermission() async {
@@ -205,7 +211,9 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     ThemeController.themeMode.addListener(_updateMapTheme);
     MapController.viewportController = _viewportController;
     MapController.pinnedPoint.addListener(_onPinnedPointChanged);
+
     _pinImage = svgToPng(AppAssets.mapPin, width: 32, height: 32);
+    MapController.dropPin = _dropPin;
   }
 
   @override
@@ -213,9 +221,11 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     ThemeController.themeMode.removeListener(_updateMapTheme);
     MapController.pinnedPoint.removeListener(_onPinnedPointChanged);
+    
     MapController.viewportController = null;
-    _viewportController.dispose();
+    MapController.dropPin = null;
 
+    _viewportController.dispose();
     super.dispose();
   }
   

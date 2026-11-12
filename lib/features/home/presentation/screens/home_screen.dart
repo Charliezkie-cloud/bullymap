@@ -32,15 +32,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   // Methods
   void _onMapSearch(Map<String, dynamic> feature) {
-    final coordinates = feature['geometry']['coordinates'];
+    final coords = feature['geometry']?['coordinates'] as List?;
+    if (coords == null || coords.length < 2) return;
 
-    final longitude = (coordinates[0] as num).toDouble();
-    final latitude = (coordinates[1] as num).toDouble();
+    final lng = (coords[0] as num).toDouble();
+    final lat = (coords[1] as num).toDouble();
+    final props = feature['properties'] as Map<String, dynamic>?;
+
+    MapController.dropPin?.call(
+      Point(coordinates: Position(lng, lat)),
+      location: PinnedLocation(
+        name: props?['name'] ?? 'Selected place',
+        address: props?['full_address'] ?? props?['place_formatted'] ?? '',
+        latitude: lat,
+        longitude: lng,
+      ),
+    );
 
     MapController.viewportController?.moveTo(
       CameraViewportState(
         center: Point(
-          coordinates: Position(longitude, latitude),
+          coordinates: Position(lng, lat),
         ),
         zoom: 16,
       ),
@@ -229,11 +241,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: IgnorePointer(
               ignoring: !_showLocationSheet,
               child: DraggableScrollableSheet(
-                initialChildSize: 0.20,
-                minChildSize: 0.20,
+                initialChildSize: 0.41,
+                minChildSize: 0.41,
                 maxChildSize: 0.50,
                 snap: true,
-                snapSizes: const [0.28, 0.50],
+                snapSizes: const [0.41, 0.50],
                 builder: (context, scrollController) {
                   return LocationDetailsSheet(
                     location: _selectedLocation,

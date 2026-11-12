@@ -51,7 +51,7 @@ class LocationDetailsSheet extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
           child: ListView(
             controller: scrollController,
             padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -136,12 +136,7 @@ class LocationDetailsSheet extends StatelessWidget {
                     icon: const Icon(Icons.navigation),
                     label: const Text('Start navigation'),
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     ),
                   ),
                 ),

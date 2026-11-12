@@ -17,7 +17,7 @@ class AppBottomNavigation extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: NavigationBar(
