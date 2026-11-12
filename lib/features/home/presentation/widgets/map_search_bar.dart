@@ -2,32 +2,34 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:bullymap/features/home/data/services/location_search_service.dart';
+import 'package:bullymap/features/home/models/location_suggestion.dart';
+import 'package:bullymap/features/home/models/pinned_location.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
-class MapSearchBar extends StatefulWidget { 
-  final ValueChanged<Map<String, dynamic>> onLocationSelected;
-  
+class MapSearchBar extends StatefulWidget {
+  final ValueChanged<PinnedLocation> onLocationSelected;
+
   const MapSearchBar({
     super.key,
-    required this.onLocationSelected
+    required this.onLocationSelected,
   });
 
   @override
   State<StatefulWidget> createState() => _MapSearchBarState();
 }
 
-class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMixin {
+class _MapSearchBarState extends State<MapSearchBar> {
   // Constants
   final LocationSearchService _locationSearchService = LocationSearchService();
   final TextEditingController _editingController = TextEditingController();
   final SpeechToText _speech = SpeechToText();
-  
+
   // States
   Timer? _debounce;
-  List<Map<String, dynamic>> _suggestions = [];
+  List<LocationSuggestion> _suggestions = [];
   bool _isLoading = false;
   bool _isListening = false;
   int _searchId = 0;
@@ -46,53 +48,85 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
     }
 
     _debounce = Timer(const Duration(milliseconds: 500), () async {
-        if (!mounted) return;
+      if (!mounted) return;
+      setState(() => _isLoading = true);
 
-        setState(() => _isLoading = true);
+      try {
+        final results = await _locationSearchService.searchLocations(query);
+        if (!mounted || id != _searchId) return;
 
-        try {
-          final results = await _locationSearchService.searchLocations(query);
+        setState(() {
+          _suggestions = results.map(LocationSuggestion.fromJson).toList();
+          _isLoading = false;
+        });
+      } catch (e) {
+        debugPrint('Location search error: $e');
+        if (!mounted || id != _searchId) return;
+        setState(() {
+          _suggestions = [];
+          _isLoading = false;
+        });
+      }
+    });
+  }
 
-          if (!mounted || id != _searchId) return;
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    if (!_isListening) return;
+    final words = result.recognizedWords;
 
-          setState(() {
-            _suggestions = results;
-            _isLoading = false;
-          });
-        } catch (e) {
-          debugPrint('Location search error: $e');
-          
-          if (!mounted || id != _searchId) return;
+    _editingController.text = words;
+    _editingController.selection = TextSelection.collapsed(offset: words.length);
+    _onSearchChanged(words);
+  }
 
-          setState(() {
-            _suggestions = [];
-            _isLoading = false;
-          });
-        }
+  void _showSpeechPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Microphone Permission Required'),
+          content: const Text(
+            'BullyMap needs access to your microphone and speech '
+            'recognition to search places by voice. Please enable '
+            'the permission in your application settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await openAppSettings();
+              },
+              child: const Text('Open Settings'),
+            ),
+          ],
+        );
       },
     );
   }
 
-  Future<void> _selectLocation(Map<String, dynamic> suggestion) async {
+  Future<void> _selectLocation(LocationSuggestion suggestion) async {
     _debounce?.cancel();
     _searchId++;
-    
+
     if (_isListening) await _stopListening();
     if (!mounted) return;
 
     FocusScope.of(context).unfocus();
-    _editingController.text = suggestion['name'] ?? '';
+    _editingController.text = suggestion.name;
     setState(() {
       _suggestions = [];
       _isLoading = false;
     });
 
     try {
-      final feature = await _locationSearchService.retrieveLocation(
-        suggestion['mapbox_id'],
-      );
+      final feature = await _locationSearchService.retrieveLocation(suggestion.mapboxId);
       if (!mounted) return;
-      widget.onLocationSelected(feature);
+      widget.onLocationSelected(PinnedLocation.fromMapboxFeature(feature));
     } catch (e) {
       debugPrint('Location retrieval error: $e');
     }
@@ -158,53 +192,12 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
     return true;
   }
 
-  void _onSpeechResult(SpeechRecognitionResult result) {
-    if (!_isListening) return; 
-
-    final words = result.recognizedWords;
-
-    _editingController.text = words;
-    _editingController.selection = TextSelection.collapsed(offset: words.length);
-
-    _onSearchChanged(words);
-  }
-
-  void _showSpeechPermissionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Microphone Permission Required'),
-          content: const Text(
-            'BullyMap needs access to your microphone and speech '
-            'recognition to search places by voice. Please enable '
-            'the permission in your application settings.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                await openAppSettings();
-              },
-              child: const Text('Open Settings'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   // Widget methods
   @override
   void dispose() {
     _debounce?.cancel();
     _speech.cancel();
-    _editingController.dispose(); 
+    _editingController.dispose();
     super.dispose();
   }
 
@@ -222,52 +215,45 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
             onChanged: _onSearchChanged,
             decoration: .new(
               hintText: "Search here...",
-
               prefixIcon: const Icon(Icons.search),
               suffixIcon: Padding(
                 padding: const EdgeInsets.only(right: 8),
-                child: !_isLoading ? IconButton(
-                  onPressed: _onMicPressed,
-                  icon: Icon(_isListening ? Icons.mic : Icons.mic_off),
-                  color: _isListening ? Colors.redAccent : null,
-                ) : const SizedBox(
-                  width: 40,
-                  height: 48,
-                  child: Center(
-                    child: SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                ),
+                child: !_isLoading
+                    ? IconButton(
+                        onPressed: _onMicPressed,
+                        icon: Icon(_isListening ? Icons.mic : Icons.mic_off),
+                        color: _isListening ? Colors.redAccent : null,
+                      )
+                    : const SizedBox(
+                        width: 40,
+                        height: 48,
+                        child: Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
               ),
-              
               filled: true,
               fillColor: Theme.of(context).colorScheme.surface,
-              
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
                 borderSide: BorderSide.none,
               ),
-
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
                 borderSide: BorderSide.none,
               ),
-
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(30),
                 borderSide: BorderSide.none,
               ),
-              
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 16,
-              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
         ),
-
         AnimatedSize(
           duration: const Duration(milliseconds: 300),
           reverseDuration: const Duration(milliseconds: 400),
@@ -280,39 +266,31 @@ class _MapSearchBarState extends State<MapSearchBar> with TickerProviderStateMix
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: const [
-                      BoxShadow(
-                        blurRadius: 8,
-                        color: Colors.black12,
-                      ),
+                      BoxShadow(blurRadius: 8, color: Colors.black12),
                     ],
                   ),
-
                   child: Material(
-                        child: ListView.separated(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _suggestions.length,
-                        separatorBuilder: (a, b) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final suggestion = _suggestions[index];
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _suggestions.length,
+                      separatorBuilder: (a, b) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final suggestion = _suggestions[index];
 
-                          return ListTile(
-                            leading: const Icon(Icons.location_on_outlined),
-                            title: Text(
-                              suggestion['name'] ?? '',
-                            ),
-                            subtitle: Text(
-                              suggestion['place_formatted'] ?? '',
-                            ),
-                            onTap: () => _selectLocation(suggestion),
-                          );
-                        },
-                      ),
+                        return ListTile(
+                          leading: const Icon(Icons.location_on_outlined),
+                          title: Text(suggestion.name),
+                          subtitle: Text(suggestion.placeFormatted),
+                          onTap: () => _selectLocation(suggestion),
+                        );
+                      },
                     ),
-                  )
+                  ),
+                )
               : const SizedBox.shrink(),
         ),
-      ]
+      ],
     );
   }
 }
