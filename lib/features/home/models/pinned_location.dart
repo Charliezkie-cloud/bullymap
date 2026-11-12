@@ -23,4 +23,21 @@ class PinnedLocation {
       longitude: longitude,
     );
   }
+
+  factory PinnedLocation.fromMapboxFeature(Map<String, dynamic> feature) {
+    final coords = (feature['geometry'] as Map<String, dynamic>?)?['coordinates'] as List?;
+    if (coords == null || coords.length < 2) {
+      throw const FormatException('Mapbox feature has no coordinates');
+    }
+    final props = (feature['properties'] as Map<String, dynamic>?) ?? const {};
+
+    return PinnedLocation(
+      name: props['name'] as String? ?? 'Selected place',
+      address: props['full_address'] as String? ??
+          props['place_formatted'] as String? ??
+          '',
+      latitude: (coords[1] as num).toDouble(),
+      longitude: (coords[0] as num).toDouble(),
+    );
+  }
 }
