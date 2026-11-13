@@ -9,6 +9,7 @@ class LocationSuggestion {
     this.placeFormatted = '',
   });
 
+  // Factory methods
   factory LocationSuggestion.fromJson(Map<String, dynamic> json) {
     return LocationSuggestion(
       mapboxId: json['mapbox_id'] as String,

@@ -40,6 +40,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() {
       _searchResults = result;
       _showSearchResults = true;
+      _isLoadingPlace = false;
+      _showLocationSheet = false;
     });
   }
 
@@ -61,6 +63,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _selectedLocation = location;
       _isLoadingPlace = false;
       _showLocationSheet = true;
+      _showSearchResults = false;
+      _searchResults.clear();
     });
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppBottomNavigation extends StatelessWidget {
+  // Constants
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
 
@@ -10,6 +11,7 @@ class AppBottomNavigation extends StatelessWidget {
     required this.onDestinationSelected,
   });
 
+  // Widget methods
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;

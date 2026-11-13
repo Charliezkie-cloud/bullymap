@@ -5,11 +5,12 @@ import 'package:bullymap/features/home/presentation/widgets/map_fab.dart';
 import 'package:flutter/material.dart';
 
 class MapActionButtons extends StatelessWidget {
+  // Constants
   final VoidCallback onRecenter;
   final VoidCallback onDirections;
   final bool isLoading;
 
-  // Compas
+  // Compass constants
   final double bearing;
   final VoidCallback onCompassPressed;
   final bool showCompass;
@@ -27,6 +28,7 @@ class MapActionButtons extends StatelessWidget {
     this.isLoading = false,
   });
 
+  // Widget methods
   @override
   Widget build(BuildContext context) {
     return Column(

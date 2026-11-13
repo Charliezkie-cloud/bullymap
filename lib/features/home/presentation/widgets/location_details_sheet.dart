@@ -3,6 +3,7 @@ import 'package:bullymap/features/home/models/pinned_location.dart';
 import 'package:flutter/material.dart';
 
 class LocationDetailsSheet extends StatelessWidget {
+  // Constants
   final PinnedLocation? location;
   final ValueChanged<PinnedLocation> onStartNavigation;
   final VoidCallback onClose;
@@ -18,6 +19,7 @@ class LocationDetailsSheet extends StatelessWidget {
     required this.scrollController
   });
 
+  // Methods
   Widget _coordinateRow(BuildContext context, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -31,6 +33,7 @@ class LocationDetailsSheet extends StatelessWidget {
     );
   }
 
+  // Widget methods
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

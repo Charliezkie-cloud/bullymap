@@ -1,10 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:bullymap/core/constants/app_assets.dart';
-import 'package:bullymap/core/services/location_service.dart';
 import 'package:bullymap/core/theme/theme_controller.dart';
 import 'package:bullymap/core/utils/svg_utils.dart';
 import 'package:bullymap/features/home/controllers/map_controller.dart';
+import 'package:bullymap/features/home/data/services/geocode_service.dart';
 import 'package:bullymap/features/home/models/pinned_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +12,7 @@ import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class MainMap extends StatefulWidget {
+  // Constants
   final ValueChanged<PinnedLocation> onLocationSelected;
   final VoidCallback onPermissionPermanentlyDenied;
   final VoidCallback onLocationLoading;
@@ -25,6 +26,7 @@ class MainMap extends StatefulWidget {
     required this.onLocationSelected
   });
 
+  // Widget methods
   @override
   State<StatefulWidget> createState() => _MainMapState();
 }
@@ -99,7 +101,7 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     }
 
     try {
-      final location = await LocationService.reverseGeocode(latitude: latitude, longitude: longitude);
+      final location = await GeocodeService.reverseGeocode(latitude: latitude, longitude: longitude);
 
       if (!mounted || requestId != _geocodingRequestId) return;
 
@@ -212,7 +214,7 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     MapController.viewportController = _viewportController;
     MapController.pinnedPoint.addListener(_onPinnedPointChanged);
 
-    _pinImage = svgToPng(AppAssets.mapPin, width: 32, height: 32);
+    _pinImage = SvgUtils.svgToPng(AppAssets.mapPin, width: 32, height: 32);
     MapController.dropPin = _dropPin;
   }
 

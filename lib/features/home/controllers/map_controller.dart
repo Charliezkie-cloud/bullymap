@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class MapController {
+  // Constants
   static final ValueNotifier<MapboxMap?> map = ValueNotifier(null);
   static final ValueNotifier<Point?> pinnedPoint = ValueNotifier(null);
 
+  // States
   static ViewportController? viewportController;
 
+  // Methods
   static void clearPin() => pinnedPoint.value = null;
   
   static Future<void> Function(Point point, {PinnedLocation? location})? dropPin;

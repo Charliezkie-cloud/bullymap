@@ -6,8 +6,10 @@ import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
 class LocationSearchService {
+  // Constants
   static final String sessionToken = const Uuid().v4();
 
+  // Methods
   static Future<List<Map<String, dynamic>>> searchLocations(String query) async {
     if (query.trim().isEmpty) return [];
 

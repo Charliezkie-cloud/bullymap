@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class MapFab extends StatelessWidget {
+  // Constants
   final VoidCallback? onPressed;
   final Widget child;
   final String tooltip;
@@ -14,6 +15,7 @@ class MapFab extends StatelessWidget {
     this.size = 44,
   });
 
+  // Widget methods
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;

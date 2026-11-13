@@ -2,6 +2,7 @@ import 'package:bullymap/features/home/models/location_suggestion.dart';
 import 'package:flutter/material.dart';
 
 class MapSearchResultSheet extends StatelessWidget {
+  // Constants
   final List<LocationSuggestion> suggestions;
   final ValueChanged<LocationSuggestion>? onSelected;
   final VoidCallback onClose;
@@ -15,6 +16,7 @@ class MapSearchResultSheet extends StatelessWidget {
     this.onSelected,
   });
 
+  // Widget methods
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -34,7 +36,6 @@ class MapSearchResultSheet extends StatelessWidget {
           child: CustomScrollView(
             controller: scrollController,
             slivers: [
-              // Drag handle
               SliverToBoxAdapter(
                 child: Row(
                   children: [
@@ -52,7 +53,6 @@ class MapSearchResultSheet extends StatelessWidget {
                 ),
               ),
 
-              // Close button
               SliverToBoxAdapter(
                 child: Row(
                   children: [
@@ -83,7 +83,6 @@ class MapSearchResultSheet extends StatelessWidget {
                 child: SizedBox(height: 12),
               ),
 
-              // Search results
               if (suggestions.isEmpty)
                 const SliverFillRemaining(
                   hasScrollBody: false,

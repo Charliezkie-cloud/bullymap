@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class NavigationFloatingButtons extends StatelessWidget {
+  // Constants
   final String _pushRoute;
   final bool _hasPrevious;
   final bool _hasNext;
@@ -13,6 +14,7 @@ class NavigationFloatingButtons extends StatelessWidget {
     this._hasNext = true,
   });
 
+  // Widget methods
   @override
   Widget build(BuildContext context) {
     return Padding(

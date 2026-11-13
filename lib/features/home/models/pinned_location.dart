@@ -11,11 +11,8 @@ class PinnedLocation {
     required this.longitude,
   });
 
-  factory PinnedLocation.fromJson(
-    Map<String, dynamic> json,
-    double latitude,
-    double longitude,
-  ) {
+  // Factory methods
+  factory PinnedLocation.fromJson(Map<String, dynamic> json, double latitude, double longitude) {
     return PinnedLocation(
       name: json['name_preferred'] ?? json['name'] ?? 'Dropped pin',
       address: json['full_address'] ?? json['place_formatted'] ?? 'Address unavailable',

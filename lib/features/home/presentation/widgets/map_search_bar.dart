@@ -10,6 +10,7 @@ import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 
 class MapSearchBar extends StatefulWidget {
+  // Constants
   final ValueChanged<PinnedLocation> onLocationSelected;
   final void Function(List<LocationSuggestion>) onMapSearchBarResults;
 
@@ -19,6 +20,7 @@ class MapSearchBar extends StatefulWidget {
     required this.onMapSearchBarResults,
   });
 
+  // Widget methods
   @override
   State<StatefulWidget> createState() => _MapSearchBarState();
 }
@@ -27,6 +29,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
   // Constants
   final TextEditingController _editingController = TextEditingController();
   final SpeechToText _speech = SpeechToText();
+  final FocusNode _focusNode = FocusNode();
 
   // States
   Timer? _debounce;
@@ -121,6 +124,17 @@ class _MapSearchBarState extends State<MapSearchBar> {
     );
   }
 
+  void _onFocusChanged() {
+    if (!_focusNode.hasFocus) {
+      _debounce?.cancel();
+      _searchId++;
+      setState(() {
+        _suggestions = [];
+        _isLoading = false;
+      });
+    }
+  }
+
   Future<void> _selectLocation(LocationSuggestion suggestion) async {
     _debounce?.cancel();
     _searchId++;
@@ -206,10 +220,20 @@ class _MapSearchBarState extends State<MapSearchBar> {
 
   // Widget methods
   @override
+  void initState() {
+    super.initState();
+    
+    _focusNode.addListener(_onFocusChanged);
+  }
+
+  @override
   void dispose() {
     _debounce?.cancel();
     _speech.cancel();
     _editingController.dispose();
+    _focusNode.removeListener(_onFocusChanged);
+    _focusNode.dispose();
+
     super.dispose();
   }
 
@@ -226,6 +250,8 @@ class _MapSearchBarState extends State<MapSearchBar> {
             controller: _editingController,
             onChanged: _onSearchChanged,
             onSubmitted: _onSearchSubmitted,
+            focusNode: _focusNode,
+            onTapOutside: (_) => _focusNode.unfocus(),
             decoration: .new(
               hintText: "Search here...",
               prefixIcon: const Icon(Icons.search),

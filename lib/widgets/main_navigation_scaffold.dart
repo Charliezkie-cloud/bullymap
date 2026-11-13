@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class MainNavigationScaffold extends StatelessWidget {
+  // Constants
   final StatefulNavigationShell navigationShell;
   
   const MainNavigationScaffold({
@@ -10,6 +11,7 @@ class MainNavigationScaffold extends StatelessWidget {
     required this.navigationShell,
   });
 
+  // Methods
   void _onDestinationSelected(int index) {
     navigationShell.goBranch(
       index,
@@ -17,11 +19,11 @@ class MainNavigationScaffold extends StatelessWidget {
     );
   }
 
+  // Widget methods
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: navigationShell,
-
       bottomNavigationBar: AppBottomNavigation(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: _onDestinationSelected,
