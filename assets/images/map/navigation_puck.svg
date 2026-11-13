@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 48 48">
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  <!-- Shadow backup path for SVG renderers without filter support -->
+  <path d="M 24 8 L 39 40 L 24 33 L 9 40 Z" fill="#000000" opacity="0.2" />
+  <!-- White border for contrast on any map background -->
+  <!-- <path d="M 24 6 L 38 38 L 24 31 L 10 38 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" /> -->
+  <!-- Left wing (lighter blue) -->
+  <path d="M 24 6 L 10 38 L 24 31 Z" fill="#0ea5e9" stroke="#0ea5e9" stroke-width="0.5" stroke-linejoin="round" />
+  <!-- Right wing (darker blue for 3D depth) -->
+  <path d="M 24 6 L 24 31 L 38 38 Z" fill="#3b82f6" stroke="#3b82f6" stroke-width="0.5" stroke-linejoin="round" />
+</svg>

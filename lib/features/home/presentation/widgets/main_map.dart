@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:bullymap/core/constants/app_assets.dart';
 import 'package:bullymap/core/theme/theme_controller.dart';
 import 'package:bullymap/core/utils/svg_utils.dart';
@@ -39,6 +37,7 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
   PointAnnotationManager? _pinManager;
   PointAnnotation? _pin;
   Future<Uint8List>? _pinImage;
+  Future<Uint8List>? _navigationPuckImage;
   bool _hasCentered = false;
   int _geocodingRequestId = 0;
   
@@ -187,8 +186,21 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
   }
 
   Future<void> _enableLocation() async {
+    final puckImage = await _navigationPuckImage;
+
     await MapController.map.value?.location.updateSettings(
-      LocationComponentSettings(enabled: true),
+      LocationComponentSettings(
+        enabled: true,
+        puckBearingEnabled: true,
+        puckBearing: PuckBearing.HEADING,
+        locationPuck: LocationPuck(
+          locationPuck2D: LocationPuck2D(
+            bearingImage: puckImage,
+            shadowImage: Uint8List(0),
+            topImage: Uint8List(0),
+          ),
+        ),
+      ),
     );
 
     if (!mounted || _hasCentered) return;
@@ -215,6 +227,7 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     MapController.pinnedPoint.addListener(_onPinnedPointChanged);
 
     _pinImage = SvgUtils.svgToPng(AppAssets.mapPin, width: 32, height: 32);
+    _navigationPuckImage = SvgUtils.svgToPng(AppAssets.mapPin, width: 28, height: 28);
     MapController.dropPin = _dropPin;
   }
 
