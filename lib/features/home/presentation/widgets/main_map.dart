@@ -227,7 +227,7 @@ class _MainMapState extends State<MainMap> with WidgetsBindingObserver {
     MapController.pinnedPoint.addListener(_onPinnedPointChanged);
 
     _pinImage = SvgUtils.svgToPng(AppAssets.mapPin, width: 32, height: 32);
-    _navigationPuckImage = SvgUtils.svgToPng(AppAssets.mapPin, width: 28, height: 28);
+    _navigationPuckImage = SvgUtils.svgToPng(AppAssets.navigationPuck, width: 28, height: 28);
     MapController.dropPin = _dropPin;
   }
 
