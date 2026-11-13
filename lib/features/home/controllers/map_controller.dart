@@ -16,7 +16,7 @@ class MapController {
   
   static Future<void> Function(Point point, {PinnedLocation? location})? dropPin;
 
-  static Future<void> goToCurrentLocation() async {
+  static Future<void> goToCurrentLocation({ double zoom = 16, double pitch = 0 }) async {
     final position = await LocationService.getCurrentLocation();
     final currentMap = map.value;
     final controller = viewportController;
@@ -31,7 +31,8 @@ class MapController {
             position.latitude,
           ),
         ),
-        zoom: 16,
+        zoom: zoom,
+        pitch: pitch,
       ),
       transition: const FlyViewportTransition(
         duration: Duration(milliseconds: 1000),

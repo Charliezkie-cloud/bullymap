@@ -1,4 +1,5 @@
 import 'package:bullymap/features/home/controllers/map_controller.dart';
+import 'package:bullymap/features/home/controllers/navigation_controller.dart';
 import 'package:bullymap/features/home/data/services/location_search_service.dart';
 import 'package:bullymap/features/home/models/location_suggestion.dart';
 import 'package:bullymap/features/home/models/pinned_location.dart';
@@ -7,6 +8,7 @@ import 'package:bullymap/features/home/presentation/widgets/main_map.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_action_buttons.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_search_bar.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_search_result_sheet.dart';
+import 'package:bullymap/features/home/presentation/widgets/navigation_hud.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -34,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isLoadingPlace = false;
   bool _showLocationSheet = false;
   bool _showSearchResults = false;
+  bool _locationSheetOpenedFromSearch = false;
 
   // Methods
   void _onMapSearchBarResults(List<LocationSuggestion> result) {
@@ -67,7 +70,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _startNavigation(PinnedLocation location) {
-    debugPrint('Navigate to ${location.name}');
+    setState(() {
+      _showLocationSheet = false;
+      _showSearchResults = false;
+    });
+
+    NavigationController.startNavigation(location);
   }
 
   void _showLocationPermissionDialog() {
@@ -105,14 +113,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _showLocationSheet = true;
       _isLoadingPlace = true;
       _selectedLocation = null;
+      _locationSheetOpenedFromSearch = false;
     });
   }
 
   void _closeLocationSheet() {
     setState(() {
       _showLocationSheet = false;
-      _showSearchResults = true;
+      _showSearchResults = _locationSheetOpenedFromSearch;
+      _locationSheetOpenedFromSearch = false;
     });
+    
     MapController.clearPin();
   }
 
@@ -145,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     setState(() => _showSearchResults = false);
 
     _onLocationLoading();
+    _locationSheetOpenedFromSearch = true;
 
     try {
       final location = await LocationSearchService.retrieve(suggestion.mapboxId);
@@ -159,6 +171,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       setState(() {
         _showLocationSheet = false;
         _isLoadingPlace = false;
+        _locationSheetOpenedFromSearch = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not load place. Try again.')),
@@ -255,7 +268,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child:  AnimatedSlide(
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeInOutCubic,
-              offset: _showLocationSheet || _showSearchResults ? const Offset(1.5, 0) : Offset.zero,
+              offset: _showLocationSheet || _showSearchResults || NavigationController.isNavigating.value ? const Offset(1.5, 0) : Offset.zero,
               child: IgnorePointer(
                 ignoring: _showLocationSheet || _showSearchResults,
                 child: MapActionButtons(
@@ -317,6 +330,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ),
             ),
           ),
+
+          const NavigationHud(),
         ]
       )
     );
