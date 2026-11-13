@@ -1,0 +1,85 @@
+PROPRIETARY AND CLOSED-SOURCE LICENSE
+
+Copyright (c) 2026 Charles Henry M. Tinoy Jr. All rights reserved.
+
+This repository, including all source code, object code, scripts, configuration
+files, documentation, designs, assets, data, commit history, and any other
+materials contained in it (collectively, the "Software"), is PROPRIETARY and
+CLOSED SOURCE. The Software is NOT open source, and nothing in this repository
+or on any platform that hosts it grants any open-source license or right.
+
+1. OWNERSHIP
+   The Software is and remains the exclusive property of Charles Henry M. Tinoy
+   Jr. ("Owner"). No title or ownership right is transferred to any person by
+   access to, viewing of, or possession of the Software.
+
+2. NO LICENSE GRANTED
+   No license, express or implied, is granted under this document. Access to
+   this repository, whether intentional, accidental, or through a hosting
+   platform's features (such as viewing, forking, or cloning), does not
+   constitute permission to use the Software. Any right to use the Software
+   exists only under a separate written agreement signed by the Owner.
+
+3. RESTRICTIONS
+   Without the Owner's prior written permission, you must not:
+   a. use, run, or deploy the Software for any purpose;
+   b. copy, reproduce, or duplicate the Software, in whole or in part;
+   c. modify, adapt, translate, or create derivative works of the Software;
+   d. distribute, publish, sublicense, sell, rent, lease, or otherwise make the
+      Software available to any third party;
+   e. reverse engineer, decompile, or disassemble the Software, or attempt to
+      derive its source code, algorithms, or structure, except to the extent
+      applicable law expressly permits despite this restriction;
+   f. remove or alter any copyright, ownership, or confidentiality notice;
+   g. use the Software, or any part of it, to train, fine-tune, or evaluate
+      machine learning or AI models, or to build a competing product or service.
+
+4. CONFIDENTIALITY
+   The Software is confidential. Any person who receives access to it shall keep
+   it confidential and shall not disclose it to any third party without the
+   Owner's prior written consent.
+
+5. AUTHORIZED ACCESS
+   Where the Owner has granted a person access to this repository (for example,
+   a collaborator, client, or contractor), that access is limited to the
+   specific purpose, scope, and duration stated in the written agreement
+   between that person and the Owner. All rights not expressly granted in such
+   agreement are reserved by the Owner.
+
+6. TERMINATION
+   Any permission to access or use the Software ends automatically if you breach
+   this license, or when the Owner revokes it in writing. On termination, you
+   must stop all use and permanently delete all copies of the Software in your
+   possession or control.
+
+7. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+   FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+8. LIMITATION OF LIABILITY
+   TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE OWNER SHALL NOT BE LIABLE FOR ANY
+   CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT, OR OTHERWISE,
+   ARISING FROM OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+9. REMEDIES
+   Unauthorized use, copying, or disclosure of the Software may cause the Owner
+   irreparable harm. The Owner may seek injunctive relief, damages, and any
+   other remedy available under law, in addition to criminal and civil
+   remedies under applicable intellectual property law, including Republic Act
+   No. 8293 (Intellectual Property Code of the Philippines), as amended.
+
+10. GOVERNING LAW AND VENUE
+    This license is governed by the laws of the Republic of the Philippines.
+    Any dispute arising from it shall be brought exclusively before the proper
+    courts of Cebu City, Philippines.
+
+11. SEVERABILITY
+    If any provision of this license is held unenforceable, the remaining
+    provisions stay in full force and effect.
+
+12. CONTACT
+    For permission requests or licensing inquiries, contact the Owner:
+    Charles Henry M. Tinoy Jr.
+    Sitio Riverside, Brgy. Lahug, Cebu City, Cebu, Philippines 6000
+    GitHub: Charliezkie
