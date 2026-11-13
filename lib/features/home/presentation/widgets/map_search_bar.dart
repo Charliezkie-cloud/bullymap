@@ -13,12 +13,16 @@ import 'package:speech_to_text/speech_to_text.dart';
 class MapSearchBar extends StatefulWidget {
   // Constants
   final ValueChanged<PinnedLocation> onLocationSelected;
+  final void Function(bool) onSearchFocused;
   final void Function(List<LocationSuggestion>) onMapSearchBarResults;
+  final bool isShowSheets;
 
   const MapSearchBar({
     super.key,
     required this.onLocationSelected,
     required this.onMapSearchBarResults,
+    required this.onSearchFocused,
+    this.isShowSheets = false,
   });
 
   // Widget methods
@@ -28,9 +32,9 @@ class MapSearchBar extends StatefulWidget {
 
 class _MapSearchBarState extends State<MapSearchBar> {
   // Constants
+  final FocusNode _focusNode = FocusNode();
   final TextEditingController _editingController = TextEditingController();
   final SpeechToText _speech = SpeechToText();
-  final FocusNode _focusNode = FocusNode();
 
   // States
   Timer? _debounce;
@@ -60,8 +64,8 @@ class _MapSearchBarState extends State<MapSearchBar> {
         final currentLocation = await LocationService.getCurrentLocation();
         final lng = currentLocation.longitude;
         final lat = currentLocation.latitude;
-        final results = await LocationSearchService.searchLocations(query, longitude: lng, latitude: lat);
-        if (!mounted || id != _searchId) return;
+        final results = await LocationSearchService.suggestLocations(query, longitude: lng, latitude: lat);
+        if (!mounted || id != _searchId || widget.isShowSheets) return;
 
         setState(() {
           _suggestions = results.map(LocationSuggestion.fromJson).toList();
@@ -79,16 +83,20 @@ class _MapSearchBarState extends State<MapSearchBar> {
   }
 
   void _onSearchSubmitted(String query) async {
+    _debounce?.cancel();
+    final id = ++_searchId;
+    setState(() { _suggestions = []; _isLoading = true; });
+    
     try {
-      final currentLocation = await LocationService.getCurrentLocation();
-      final lng = currentLocation.longitude;
-      final lat = currentLocation.latitude;
-      final results = await LocationSearchService.searchLocations(query, longitude: lng, latitude: lat);
-      final mapped = results.map(LocationSuggestion.fromJson).toList();
-      widget.onMapSearchBarResults(mapped);
-      setState(() => _suggestions.clear());
+      final loc = await LocationService.getCurrentLocation();
+      final results = await LocationSearchService.searchLocations(query, longitude: loc.longitude, latitude: loc.latitude);
+      if (!mounted || id != _searchId) return;
+
+      widget.onMapSearchBarResults(results.map(LocationSuggestion.fromJson).toList());
     } catch (e) {
       debugPrint('Location search error: $e');
+    } finally {
+      if (mounted && id == _searchId) setState(() => _isLoading = false);
     }
   }
 
@@ -132,14 +140,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
   }
 
   void _onFocusChanged() {
-    if (!_focusNode.hasFocus) {
-      _debounce?.cancel();
-      _searchId++;
-      setState(() {
-        _suggestions = [];
-        _isLoading = false;
-      });
-    }
+    widget.onSearchFocused(_focusNode.hasFocus);
   }
 
   Future<void> _selectLocation(LocationSuggestion suggestion) async {
@@ -229,7 +230,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
   @override
   void initState() {
     super.initState();
-    
+  
     _focusNode.addListener(_onFocusChanged);
   }
 
@@ -245,6 +246,21 @@ class _MapSearchBarState extends State<MapSearchBar> {
   }
 
   @override
+  void didUpdateWidget(covariant MapSearchBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isShowSheets && !oldWidget.isShowSheets) {
+      _debounce?.cancel();
+      _searchId++;
+      if (_suggestions.isNotEmpty || _isLoading) {
+        setState(() {
+          _suggestions = [];
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: .min,
@@ -254,11 +270,10 @@ class _MapSearchBarState extends State<MapSearchBar> {
           borderRadius: BorderRadius.circular(30),
           clipBehavior: Clip.antiAlias,
           child: TextField(
+            focusNode: _focusNode,
             controller: _editingController,
             onChanged: _onSearchChanged,
             onSubmitted: _onSearchSubmitted,
-            focusNode: _focusNode,
-            onTapOutside: (_) => _focusNode.unfocus(),
             decoration: .new(
               hintText: "Search here...",
               prefixIcon: const Icon(Icons.search),
@@ -305,7 +320,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
           reverseDuration: const Duration(milliseconds: 400),
           curve: Curves.easeInOutCubic,
           alignment: Alignment.topCenter,
-          child: _suggestions.isNotEmpty
+          child: (_suggestions.isNotEmpty && !widget.isShowSheets)
               ? Container(
                   margin: const EdgeInsets.only(top: 8),
                   decoration: BoxDecoration(
@@ -315,22 +330,31 @@ class _MapSearchBarState extends State<MapSearchBar> {
                       BoxShadow(blurRadius: 8, color: Colors.black12),
                     ],
                   ),
-                  child: Material(
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _suggestions.length,
-                      separatorBuilder: (a, b) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final suggestion = _suggestions[index];
-
-                        return ListTile(
-                          leading: const Icon(Icons.location_on_outlined),
-                          title: Text(suggestion.name),
-                          subtitle: Text(suggestion.placeFormatted),
-                          onTap: () => _selectLocation(suggestion),
-                        );
-                      },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: SizedBox(
+                      height: 250,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Scrollbar(
+                          child: ListView.separated(
+                            padding: EdgeInsets.zero,
+                            keyboardDismissBehavior:
+                                ScrollViewKeyboardDismissBehavior.onDrag,
+                            itemCount: _suggestions.length,
+                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final suggestion = _suggestions[index];
+                              return ListTile(
+                                leading: const Icon(Icons.location_on_outlined),
+                                title: Text(suggestion.name),
+                                subtitle: Text(suggestion.placeFormatted),
+                                onTap: () => _selectLocation(suggestion),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 )

@@ -23,7 +23,7 @@ class HomeScreen extends StatefulWidget {
   State<StatefulWidget> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {  
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   // States
   List<LocationSuggestion> _searchResults = [];
   PinnedLocation? _selectedLocation;
@@ -46,7 +46,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _onMapSearchBarSelected(PinnedLocation location) {
-    setState(() => _searchResults = []);
     final point = Point(coordinates: Position(location.longitude, location.latitude),);
 
     MapController.dropPin?.call(point, location: location);
@@ -64,7 +63,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _isLoadingPlace = false;
       _showLocationSheet = true;
       _showSearchResults = false;
-      _searchResults.clear();
     });
   }
 
@@ -111,8 +109,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _closeLocationSheet() {
-    setState(() => _showLocationSheet = false);
+    setState(() {
+      _showLocationSheet = false;
+      _showSearchResults = true;
+    });
     MapController.clearPin();
+  }
+
+  void _onSearchFieldFocus(bool isFocus) {
+    if (!isFocus) return;
+
+    setState(() {
+      _showSearchResults = false;
+      _showLocationSheet = false;
+    });
   }
 
   Future<void> _onCameraChanged(CameraChangedEventData data,) async {
@@ -132,10 +142,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   Future<void> _onSuggestionTapped(LocationSuggestion suggestion) async {
     FocusManager.instance.primaryFocus?.unfocus();
-    setState(() {
-      _searchResults = [];
-      _showSearchResults = false;
-    });
+    setState(() => _showSearchResults = false);
 
     _onLocationLoading();
 
@@ -217,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true,
       body: Stack(
         fit: .expand,
         children: [
@@ -230,38 +237,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             )
           ),
 
-          AnimatedSlide(
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeInOutCubic,
-            offset: _showSearchResults
-                ? Offset.zero
-                : const Offset(0, 1),
-            child: IgnorePointer(
-              ignoring: !_showSearchResults,
-              child: DraggableScrollableSheet(
-                initialChildSize: 0.50,
-                minChildSize: 0.50,
-                maxChildSize: 0.75,
-                snap: true,
-                snapSizes: const [0.50, 0.75],
-                builder: (context, scrollController) {
-                  return MapSearchResultSheet(
-                    suggestions: _searchResults,
-                    scrollController: scrollController,
-                    onClose: () => setState(() => _showSearchResults = false),
-                    onSelected: _onSuggestionTapped,
-                  );
-                },
-              ),
-            ),
-          ),
-
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(top: 12, left: 16, right: 16),
               child: MapSearchBar(
                 onLocationSelected: _onMapSearchBarSelected,
                 onMapSearchBarResults: _onMapSearchBarResults,
+                onSearchFocused: _onSearchFieldFocus,
+                isShowSheets: _showSearchResults || _showLocationSheet,
               ),
             )
           ),
@@ -290,15 +273,38 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           AnimatedSlide(
             duration: const Duration(milliseconds: 350),
             curve: Curves.easeInOutCubic,
+            offset: _showSearchResults ? Offset.zero : const Offset(0, 1),
+            child: IgnorePointer(
+              ignoring: !_showSearchResults,
+              child: DraggableScrollableSheet(
+                initialChildSize: 0.50,
+                minChildSize: 0.50,
+                maxChildSize: 0.50,
+                snap: true,
+                builder: (context, scrollController) {
+                  return MapSearchResultSheet(
+                    suggestions: _searchResults,
+                    scrollController: scrollController,
+                    onClose: () => setState(() => _showSearchResults = false),
+                    onSelected: _onSuggestionTapped
+                  );
+                },
+              ),
+            ),
+          ),
+
+          AnimatedSlide(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOutCubic,
             offset: _showLocationSheet ? Offset.zero : const Offset(0, 1),
             child: IgnorePointer(
               ignoring: !_showLocationSheet,
               child: DraggableScrollableSheet(
-                initialChildSize: 0.41,
-                minChildSize: 0.41,
+                initialChildSize: 0.40,
+                minChildSize: 0.40,
                 maxChildSize: 0.50,
                 snap: true,
-                snapSizes: const [0.41, 0.50],
+                snapSizes: const [0.40, 0.50],
                 builder: (context, scrollController) {
                   return LocationDetailsSheet(
                     location: _selectedLocation,

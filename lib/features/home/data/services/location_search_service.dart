@@ -10,6 +10,35 @@ class LocationSearchService {
   static final String sessionToken = const Uuid().v4();
 
   // Methods
+  static Future<List<Map<String, dynamic>>> suggestLocations(String query, { required double latitude, required double longitude }) async {
+    if (query.trim().isEmpty) return [];
+
+    final uri = Uri.https(
+      'api.mapbox.com',
+      '/search/searchbox/v1/suggest',
+      {
+        'q': query,
+        'access_token': Env.mapBoxAccessToken,
+        'session_token': sessionToken,
+        'limit': '5',
+        'language': 'en',
+        'proximity': '$longitude,$latitude',
+      },
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to search locations');
+    }
+
+    final data = jsonDecode(response.body);
+
+    return List<Map<String, dynamic>>.from(
+      data['suggestions'],
+    );
+  }
+  
   static Future<List<Map<String, dynamic>>> searchLocations(String query, { required double latitude, required double longitude }) async {
     if (query.trim().isEmpty) return [];
 

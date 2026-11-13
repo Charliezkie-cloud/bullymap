@@ -33,93 +33,90 @@ class MapSearchResultSheet extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: CustomScrollView(
-            controller: scrollController,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Row(
-                  children: [
-                    const Spacer(),
-                    Container(
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: colors.outlineVariant,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    const Spacer(),
-                  ],
+          child: Column(
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: colors.outlineVariant,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
 
-              SliverToBoxAdapter(
-                child: Row(
-                  children: [
-                    const Spacer(),
-                    IconButton(
-                      onPressed: onClose,
-                      icon: const Icon(Icons.close),
-                      tooltip: 'Close',
-                      visualDensity: VisualDensity.compact,
-                    ),
-                  ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: onClose,
+                  icon: const Icon(Icons.close),
+                  tooltip: 'Close',
+                  visualDensity: VisualDensity.compact,
                 ),
               ),
 
-              SliverToBoxAdapter(
+              Align(
+                alignment: Alignment.centerLeft,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'Search Results',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Search Results',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'By Nearest Location',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
 
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 12),
-              ),
+              const SizedBox(height: 12),
 
-              if (suggestions.isEmpty)
-                const SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
-                    child: Text('No results found'),
-                  ),
-                )
-              else
-                SliverList.separated(
-                  itemCount: suggestions.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemBuilder: (context, index) {
-                    final item = suggestions[index];
+              Expanded(
+                child: suggestions.isEmpty
+                    ? const Center(child: Text('No results found'))
+                    : ListView.separated(
+                        controller: scrollController,
+                        itemCount: suggestions.length,
+                        padding: EdgeInsets.zero,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final item = suggestions[index];
 
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                      ),
-                      leading: const Icon(Icons.place_outlined),
-                      title: Text(
-                        item.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: item.placeFormatted.isEmpty
-                          ? null
-                          : Text(
-                              item.placeFormatted,
-                              maxLines: 2,
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                            leading: const Icon(Icons.place_outlined),
+                            title: Text(
+                              item.name,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                      onTap: onSelected == null
-                          ? null
-                          : () => onSelected!(item),
-                    );
-                  },
-                ),
+                            subtitle: item.placeFormatted.isEmpty
+                                ? null
+                                : Text(
+                                    item.placeFormatted,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                            onTap: onSelected == null
+                                ? null
+                                : () => onSelected!(item),
+                          );
+                        },
+                      ),
+              ),
             ],
           ),
         ),
