@@ -10,7 +10,7 @@ class LocationSearchService {
   static final String sessionToken = const Uuid().v4();
 
   // Methods
-  static Future<List<Map<String, dynamic>>> searchLocations(String query) async {
+  static Future<List<Map<String, dynamic>>> searchLocations(String query, { required double latitude, required double longitude }) async {
     if (query.trim().isEmpty) return [];
 
     final uri = Uri.https(
@@ -20,8 +20,9 @@ class LocationSearchService {
         'q': query,
         'access_token': Env.mapBoxAccessToken,
         'session_token': sessionToken,
-        'limit': '5',
+        'limit': '10',
         'language': 'en',
+        'proximity': '$longitude,$latitude',
       },
     );
 

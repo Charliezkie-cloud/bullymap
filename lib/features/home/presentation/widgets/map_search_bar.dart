@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:bullymap/core/services/location_service.dart';
 import 'package:bullymap/features/home/data/services/location_search_service.dart';
 import 'package:bullymap/features/home/models/location_suggestion.dart';
 import 'package:bullymap/features/home/models/pinned_location.dart';
@@ -56,7 +57,10 @@ class _MapSearchBarState extends State<MapSearchBar> {
       setState(() => _isLoading = true);
 
       try {
-        final results = await LocationSearchService.searchLocations(query);
+        final currentLocation = await LocationService.getCurrentLocation();
+        final lng = currentLocation.longitude;
+        final lat = currentLocation.latitude;
+        final results = await LocationSearchService.searchLocations(query, longitude: lng, latitude: lat);
         if (!mounted || id != _searchId) return;
 
         setState(() {
@@ -76,7 +80,10 @@ class _MapSearchBarState extends State<MapSearchBar> {
 
   void _onSearchSubmitted(String query) async {
     try {
-      final results = await LocationSearchService.searchLocations(query);
+      final currentLocation = await LocationService.getCurrentLocation();
+      final lng = currentLocation.longitude;
+      final lat = currentLocation.latitude;
+      final results = await LocationSearchService.searchLocations(query, longitude: lng, latitude: lat);
       final mapped = results.map(LocationSuggestion.fromJson).toList();
       widget.onMapSearchBarResults(mapped);
       setState(() => _suggestions.clear());
