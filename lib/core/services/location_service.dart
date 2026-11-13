@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:bullymap/features/home/data/services/location_search_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:bullymap/core/config/env.dart';
 import 'package:bullymap/features/home/models/pinned_location.dart';
@@ -20,7 +21,7 @@ class LocationService {
     );
   }
 
-  static Future<PinnedLocation?> reverseGeocode({ required double latitude, required double longitude}) async {
+  static Future<PinnedLocation?> reverseGeocode({ required double latitude, required double longitude, required  }) async {
     final uri = Uri.https(
       'api.mapbox.com',
       '/search/geocode/v6/reverse',
@@ -28,6 +29,7 @@ class LocationService {
         'longitude': longitude.toString(),
         'latitude': latitude.toString(),
         'access_token': Env.mapBoxAccessToken,
+        'session_token': LocationSearchService.sessionToken
       },
     );
 

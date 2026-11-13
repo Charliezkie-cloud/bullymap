@@ -1,0 +1,130 @@
+import 'package:bullymap/features/home/models/location_suggestion.dart';
+import 'package:flutter/material.dart';
+
+class MapSearchResultSheet extends StatelessWidget {
+  final List<LocationSuggestion> suggestions;
+  final ValueChanged<LocationSuggestion>? onSelected;
+  final VoidCallback onClose;
+  final ScrollController scrollController;
+
+  const MapSearchResultSheet({
+    super.key,
+    required this.suggestions,
+    required this.onClose,
+    required this.scrollController,
+    this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Material(
+      color: colors.surface,
+      elevation: 8,
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(24),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: CustomScrollView(
+            controller: scrollController,
+            slivers: [
+              // Drag handle
+              SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    Container(
+                      width: 40,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: colors.outlineVariant,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+              ),
+
+              // Close button
+              SliverToBoxAdapter(
+                child: Row(
+                  children: [
+                    const Spacer(),
+                    IconButton(
+                      onPressed: onClose,
+                      icon: const Icon(Icons.close),
+                      tooltip: 'Close',
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+              ),
+
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'Search Results',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 12),
+              ),
+
+              // Search results
+              if (suggestions.isEmpty)
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text('No results found'),
+                  ),
+                )
+              else
+                SliverList.separated(
+                  itemCount: suggestions.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final item = suggestions[index];
+
+                    return ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+                      leading: const Icon(Icons.place_outlined),
+                      title: Text(
+                        item.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: item.placeFormatted.isEmpty
+                          ? null
+                          : Text(
+                              item.placeFormatted,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                      onTap: onSelected == null
+                          ? null
+                          : () => onSelected!(item),
+                    );
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

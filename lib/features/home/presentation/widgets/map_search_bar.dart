@@ -11,10 +11,12 @@ import 'package:speech_to_text/speech_to_text.dart';
 
 class MapSearchBar extends StatefulWidget {
   final ValueChanged<PinnedLocation> onLocationSelected;
+  final void Function(List<LocationSuggestion>) onMapSearchBarResults;
 
   const MapSearchBar({
     super.key,
     required this.onLocationSelected,
+    required this.onMapSearchBarResults,
   });
 
   @override
@@ -23,7 +25,6 @@ class MapSearchBar extends StatefulWidget {
 
 class _MapSearchBarState extends State<MapSearchBar> {
   // Constants
-  final LocationSearchService _locationSearchService = LocationSearchService();
   final TextEditingController _editingController = TextEditingController();
   final SpeechToText _speech = SpeechToText();
 
@@ -47,12 +48,12 @@ class _MapSearchBarState extends State<MapSearchBar> {
       return;
     }
 
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
+    _debounce = Timer(const Duration(milliseconds: 1000), () async {
       if (!mounted) return;
       setState(() => _isLoading = true);
 
       try {
-        final results = await _locationSearchService.searchLocations(query);
+        final results = await LocationSearchService.searchLocations(query);
         if (!mounted || id != _searchId) return;
 
         setState(() {
@@ -68,6 +69,17 @@ class _MapSearchBarState extends State<MapSearchBar> {
         });
       }
     });
+  }
+
+  void _onSearchSubmitted(String query) async {
+    try {
+      final results = await LocationSearchService.searchLocations(query);
+      final mapped = results.map(LocationSuggestion.fromJson).toList();
+      widget.onMapSearchBarResults(mapped);
+      setState(() => _suggestions.clear());
+    } catch (e) {
+      debugPrint('Location search error: $e');
+    }
   }
 
   void _onSpeechResult(SpeechRecognitionResult result) {
@@ -124,7 +136,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
     });
 
     try {
-      final feature = await _locationSearchService.retrieveLocation(suggestion.mapboxId);
+      final feature = await LocationSearchService.retrieveLocation(suggestion.mapboxId);
       if (!mounted) return;
       widget.onLocationSelected(PinnedLocation.fromMapboxFeature(feature));
     } catch (e) {
@@ -213,6 +225,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
           child: TextField(
             controller: _editingController,
             onChanged: _onSearchChanged,
+            onSubmitted: _onSearchSubmitted,
             decoration: .new(
               hintText: "Search here...",
               prefixIcon: const Icon(Icons.search),

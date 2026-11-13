@@ -1,13 +1,14 @@
 
 import 'dart:convert';
 import 'package:bullymap/core/config/env.dart';
+import 'package:bullymap/features/home/models/pinned_location.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 
 class LocationSearchService {
-  final String sessionToken = const Uuid().v4();
+  static final String sessionToken = const Uuid().v4();
 
-  Future<List<Map<String, dynamic>>> searchLocations(String query) async {
+  static Future<List<Map<String, dynamic>>> searchLocations(String query) async {
     if (query.trim().isEmpty) return [];
 
     final uri = Uri.https(
@@ -35,7 +36,7 @@ class LocationSearchService {
     );
   }
 
-  Future<Map<String, dynamic>> retrieveLocation(String mapboxId) async {
+  static Future<Map<String, dynamic>> retrieveLocation(String mapboxId) async {
     final uri = Uri.https(
       'api.mapbox.com',
       '/search/searchbox/v1/retrieve/$mapboxId',
@@ -54,5 +55,29 @@ class LocationSearchService {
     final data = jsonDecode(response.body);
 
     return data['features'][0];
+  }
+
+  static Future<PinnedLocation> retrieve(String mapboxId) async {
+    final uri = Uri.https(
+      'api.mapbox.com',
+      '/search/searchbox/v1/retrieve/$mapboxId',
+      {'session_token': sessionToken, 'access_token': Env.mapBoxAccessToken},
+    );
+
+    final res = await http.get(uri).timeout(const Duration(seconds: 10));
+    if (res.statusCode != 200) {
+      throw Exception('Retrieve failed: ${res.statusCode}');
+    }
+
+    final feature = (jsonDecode(res.body)['features'] as List).first;
+    final coords = feature['geometry']['coordinates'] as List;
+    final props = feature['properties'] as Map<String, dynamic>;
+
+    return PinnedLocation(
+      name: props['name'] as String? ?? '',
+      address: props['address'] as String? ?? '',
+      longitude: (coords[0] as num).toDouble(),
+      latitude: (coords[1] as num).toDouble(),
+    );
   }
 }

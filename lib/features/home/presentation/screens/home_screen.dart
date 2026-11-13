@@ -1,10 +1,12 @@
 import 'package:bullymap/features/home/controllers/map_controller.dart';
+import 'package:bullymap/features/home/data/services/location_search_service.dart';
 import 'package:bullymap/features/home/models/location_suggestion.dart';
 import 'package:bullymap/features/home/models/pinned_location.dart';
 import 'package:bullymap/features/home/presentation/widgets/location_details_sheet.dart';
 import 'package:bullymap/features/home/presentation/widgets/main_map.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_action_buttons.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_search_bar.dart';
+import 'package:bullymap/features/home/presentation/widgets/map_search_result_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -23,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {  
   // States
+  List<LocationSuggestion> _searchResults = [];
   PinnedLocation? _selectedLocation;
   double _mapBearing = 0;
   bool _isLoadingLocation = false;
@@ -30,9 +33,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _showCompass = false;
   bool _isLoadingPlace = false;
   bool _showLocationSheet = false;
+  bool _showSearchResults = false;
 
   // Methods
+  void _onMapSearchBarResults(List<LocationSuggestion> result) {
+    setState(() {
+      _searchResults = result;
+      _showSearchResults = true;
+    });
+  }
+
   void _onMapSearchBarSelected(PinnedLocation location) {
+    setState(() => _searchResults = []);
     final point = Point(coordinates: Position(location.longitude, location.latitude),);
 
     MapController.dropPin?.call(point, location: location);
@@ -114,6 +126,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _onSuggestionTapped(LocationSuggestion suggestion) async {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      _searchResults = [];
+      _showSearchResults = false;
+    });
+
+    _onLocationLoading();
+
+    try {
+      final location = await LocationSearchService.retrieve(suggestion.mapboxId);
+      if (!mounted) return;
+
+      _onMapSearchBarSelected(location);
+      _onLocationSelected(location);
+    } catch (e) {
+      debugPrint('Retrieve error: $e');
+      if (!mounted) return;
+
+      setState(() {
+        _showLocationSheet = false;
+        _isLoadingPlace = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not load place. Try again.')),
+      );
+    }
+  }
+
   Future<void> _recenterMap() async {
     setState(() => _isLoadingLocation = true);
 
@@ -184,11 +225,40 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               onLocationSelected: _onLocationSelected,
             )
           ),
-          
+
+          AnimatedSlide(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOutCubic,
+            offset: _showSearchResults
+                ? Offset.zero
+                : const Offset(0, 1),
+            child: IgnorePointer(
+              ignoring: !_showSearchResults,
+              child: DraggableScrollableSheet(
+                initialChildSize: 0.50,
+                minChildSize: 0.50,
+                maxChildSize: 0.75,
+                snap: true,
+                snapSizes: const [0.50, 0.75],
+                builder: (context, scrollController) {
+                  return MapSearchResultSheet(
+                    suggestions: _searchResults,
+                    scrollController: scrollController,
+                    onClose: () => setState(() => _showSearchResults = false),
+                    onSelected: _onSuggestionTapped,
+                  );
+                },
+              ),
+            ),
+          ),
+
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(top: 12, left: 16, right: 16),
-              child: MapSearchBar(onLocationSelected: _onMapSearchBarSelected),
+              child: MapSearchBar(
+                onLocationSelected: _onMapSearchBarSelected,
+                onMapSearchBarResults: _onMapSearchBarResults,
+              ),
             )
           ),
 
@@ -198,12 +268,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child:  AnimatedSlide(
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeInOutCubic,
-              
-              offset: _showLocationSheet ? const Offset(1.5, 0) : Offset.zero,
-
+              offset: _showLocationSheet || _showSearchResults ? const Offset(1.5, 0) : Offset.zero,
               child: IgnorePointer(
-                ignoring: _showLocationSheet,
-
+                ignoring: _showLocationSheet || _showSearchResults,
                 child: MapActionButtons(
                   onRecenter: _recenterMap,
                   onDirections: () => debugPrint('Directions pressed'),
