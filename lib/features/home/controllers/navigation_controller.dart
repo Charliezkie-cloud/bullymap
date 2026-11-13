@@ -15,9 +15,7 @@ class NavigationController {
   // Notifiers
   static final ValueNotifier<bool> isNavigating = ValueNotifier(false);
   static final ValueNotifier<bool> isLoading = ValueNotifier(false);
-  static final ValueNotifier<NavigationRoute?> activeRoute = ValueNotifier(
-    null,
-  );
+  static final ValueNotifier<NavigationRoute?> activeRoute = ValueNotifier(null);
   static final ValueNotifier<NavigationStep?> currentStep = ValueNotifier(null);
   static final ValueNotifier<double> remainingDistance = ValueNotifier(0.0);
   static final ValueNotifier<double> remainingDuration = ValueNotifier(0.0);

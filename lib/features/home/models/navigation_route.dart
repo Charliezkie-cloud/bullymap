@@ -14,6 +14,7 @@ class NavigationRoute {
     required this.steps,
   });
 
+  // Methods
   factory NavigationRoute.fromJson(Map<String, dynamic> json) {
     final rawGeometry = json['geometry'] as Map<String, dynamic>? ?? {};
     final rawCoords = (rawGeometry['coordinates'] as List<dynamic>?) ?? [];

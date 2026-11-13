@@ -18,6 +18,7 @@ class NavigationStep {
     required this.location,
   });
 
+  // Methods
   factory NavigationStep.fromJson(Map<String, dynamic> json) {
     final maneuver = json['maneuver'] as Map<String, dynamic>? ?? {};
     final coords = (maneuver['location'] as List<dynamic>?) ?? [0.0, 0.0];

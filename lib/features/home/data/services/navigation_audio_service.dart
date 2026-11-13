@@ -2,6 +2,7 @@ import 'package:bullymap/features/home/models/navigation_step.dart';
 import 'package:flutter/foundation.dart';
 
 class NavigationAudioService {
+  // Constants
   static final Map<String, String> _customAssetMap = {};
 
   static const Map<String, String> defaultAssets = {
@@ -17,8 +18,8 @@ class NavigationAudioService {
     'straight': 'assets/audio/straight.mp3',
   };
 
-  static Future<void> Function(String assetPath, String fallbackText)?
-  audioPlayerHandler;
+  // Methods
+  static Future<void> Function(String assetPath, String fallbackText)? audioPlayerHandler;
 
   static void registerCustomAudio(String key, String assetPath) {
     _customAssetMap[key] = assetPath;
