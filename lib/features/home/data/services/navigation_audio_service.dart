@@ -1,4 +1,4 @@
-import 'package:bullymap/features/home/models/navigation_step.dart';
+import 'package:bullymap/features/home/data/models/navigation_step.dart';
 import 'package:flutter/foundation.dart';
 
 class NavigationAudioService {

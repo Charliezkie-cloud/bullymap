@@ -3,7 +3,7 @@ import 'package:bullymap/core/theme/theme_controller.dart';
 import 'package:bullymap/core/utils/svg_utils.dart';
 import 'package:bullymap/features/home/controllers/map_controller.dart';
 import 'package:bullymap/features/home/data/services/geocode_service.dart';
-import 'package:bullymap/features/home/models/pinned_location.dart';
+import 'package:bullymap/features/home/data/models/pinned_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';

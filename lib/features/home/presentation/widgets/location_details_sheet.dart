@@ -1,5 +1,5 @@
 
-import 'package:bullymap/features/home/models/pinned_location.dart';
+import 'package:bullymap/features/home/data/models/pinned_location.dart';
 import 'package:flutter/material.dart';
 
 class LocationDetailsSheet extends StatelessWidget {

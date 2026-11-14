@@ -1,4 +1,4 @@
-import 'package:bullymap/features/home/models/navigation_step.dart';
+import 'package:bullymap/features/home/data/models/navigation_step.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 class NavigationRoute {

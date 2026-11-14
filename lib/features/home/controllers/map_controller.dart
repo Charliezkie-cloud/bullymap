@@ -1,5 +1,5 @@
 import 'package:bullymap/core/services/location_service.dart';
-import 'package:bullymap/features/home/models/pinned_location.dart';
+import 'package:bullymap/features/home/data/models/pinned_location.dart';
 import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:bullymap/core/config/env.dart';
-import 'package:bullymap/features/home/models/navigation_route.dart';
+import 'package:bullymap/features/home/data/models/navigation_route.dart';
 import 'package:http/http.dart' as http;
 
 class DirectionsService {

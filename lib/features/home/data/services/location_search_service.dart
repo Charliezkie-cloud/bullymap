@@ -1,7 +1,7 @@
 
 import 'dart:convert';
 import 'package:bullymap/core/config/env.dart';
-import 'package:bullymap/features/home/models/pinned_location.dart';
+import 'package:bullymap/features/home/data/models/pinned_location.dart';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
 

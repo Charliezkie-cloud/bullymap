@@ -1,6 +1,6 @@
 import 'package:bullymap/features/home/controllers/navigation_controller.dart';
-import 'package:bullymap/features/home/models/navigation_route.dart';
-import 'package:bullymap/features/home/models/navigation_step.dart';
+import 'package:bullymap/features/home/data/models/navigation_route.dart';
+import 'package:bullymap/features/home/data/models/navigation_step.dart';
 import 'package:flutter/material.dart';
 
 class NavigationHud extends StatelessWidget {

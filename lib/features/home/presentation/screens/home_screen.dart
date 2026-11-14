@@ -1,8 +1,8 @@
 import 'package:bullymap/features/home/controllers/map_controller.dart';
 import 'package:bullymap/features/home/controllers/navigation_controller.dart';
 import 'package:bullymap/features/home/data/services/location_search_service.dart';
-import 'package:bullymap/features/home/models/location_suggestion.dart';
-import 'package:bullymap/features/home/models/pinned_location.dart';
+import 'package:bullymap/features/home/data/models/location_suggestion.dart';
+import 'package:bullymap/features/home/data/models/pinned_location.dart';
 import 'package:bullymap/features/home/presentation/widgets/location_details_sheet.dart';
 import 'package:bullymap/features/home/presentation/widgets/main_map.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_action_buttons.dart';

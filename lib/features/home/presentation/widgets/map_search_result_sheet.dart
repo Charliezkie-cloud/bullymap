@@ -1,4 +1,4 @@
-import 'package:bullymap/features/home/models/location_suggestion.dart';
+import 'package:bullymap/features/home/data/models/location_suggestion.dart';
 import 'package:flutter/material.dart';
 
 class MapSearchResultSheet extends StatelessWidget {

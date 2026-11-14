@@ -3,8 +3,8 @@ import 'dart:io';
 
 import 'package:bullymap/core/services/location_service.dart';
 import 'package:bullymap/features/home/data/services/location_search_service.dart';
-import 'package:bullymap/features/home/models/location_suggestion.dart';
-import 'package:bullymap/features/home/models/pinned_location.dart';
+import 'package:bullymap/features/home/data/models/location_suggestion.dart';
+import 'package:bullymap/features/home/data/models/pinned_location.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
