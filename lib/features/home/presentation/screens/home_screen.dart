@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _locationSheetOpenedFromSearch = false;
 
   // Methods
-  void _onMapSearchBarResults(List<LocationSuggestion> result) {
+  void _onSearchResults(List<LocationSuggestion> result) {
     setState(() {
       _searchResults = result;
       _showSearchResults = true;
@@ -48,28 +48,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  void _onMapSearchBarSelected(PinnedLocation location) {
-    final point = Point(coordinates: Position(location.longitude, location.latitude),);
+  Future<PinnedLocation?> _onSearchResultSelected(PinnedLocation location) {
+    final point = Point(coordinates: Position(location.longitude, location.latitude));
 
-    MapController.dropPin?.call(point, location: location);
-    MapController.viewportController?.moveTo(
-      CameraViewportState(center: point, zoom: 16),
-      transition: const FlyViewportTransition(
-        duration: Duration(milliseconds: 1000),
-      ),
-    );
+    return MapController.dropPin(point, location: location);
   }
 
-  void _onLocationSelected(PinnedLocation location) {
+  void _onMapPinned(PinnedLocation location) {
     setState(() {
       _selectedLocation = location;
-      _isLoadingPlace = false;
       _showLocationSheet = true;
+      _isLoadingPlace = false;
       _showSearchResults = false;
     });
   }
 
-  void _startNavigation(PinnedLocation location) {
+  void _onStartNavigation(PinnedLocation location) {
     setState(() {
       _showLocationSheet = false;
       _showSearchResults = false;
@@ -108,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _onLocationLoading() {
+  void _onPinLoading() {
     setState(() {
       _showLocationSheet = true;
       _isLoadingPlace = true;
@@ -117,17 +111,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  void _closeLocationSheet() {
+  Future<void> _onCloseLocationSheet() async {
     setState(() {
       _showLocationSheet = false;
       _showSearchResults = _locationSheetOpenedFromSearch;
       _locationSheetOpenedFromSearch = false;
     });
-    
-    MapController.clearPin();
+
+    await MapController.clearPin();
   }
 
-  void _onSearchFieldFocus(bool isFocus) {
+  void _onSearchFocusChanged(bool isFocus) {
     if (!isFocus) return;
 
     setState(() {
@@ -155,15 +149,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _showSearchResults = false);
 
-    _onLocationLoading();
+    _onPinLoading();
     _locationSheetOpenedFromSearch = true;
 
     try {
       final location = await LocationSearchService.retrieve(suggestion.mapboxId);
       if (!mounted) return;
 
-      _onMapSearchBarSelected(location);
-      _onLocationSelected(location);
+      final pinnedLocation = await _onSearchResultSelected(location);
+      if (!mounted || pinnedLocation == null) return;
+
+      _onMapPinned(pinnedLocation);
     } catch (e) {
       debugPrint('Retrieve error: $e');
       if (!mounted) return;
@@ -179,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _recenterMap() async {
+  Future<void> _onRecenter() async {
     setState(() => _isLoadingLocation = true);
 
     try {
@@ -197,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _resetCompass() async {
+  Future<void> _onCompassPressed() async {
     final map = MapController.map.value;
 
     if (map == null) return;
@@ -244,9 +240,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           Positioned.fill(
             child: MainMap(
               onPermissionPermanentlyDenied: _showLocationPermissionDialog,
-              onCameraChangedListener: _onCameraChanged,
-              onLocationLoading: _onLocationLoading,
-              onLocationSelected: _onLocationSelected,
+              onCameraChanged: _onCameraChanged,
+              onPinLoading: _onPinLoading,
+              onMapPinned: _onMapPinned,
             )
           ),
 
@@ -254,9 +250,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: Padding(
               padding: const EdgeInsets.only(top: 12, left: 16, right: 16),
               child: MapSearchBar(
-                onLocationSelected: _onMapSearchBarSelected,
-                onMapSearchBarResults: _onMapSearchBarResults,
-                onSearchFocused: _onSearchFieldFocus,
+                onLocationSelected: _onSearchResultSelected,
+                onMapSearchBarResults: _onSearchResults,
+                onSearchFocused: _onSearchFocusChanged,
                 isShowSheets: _showSearchResults || _showLocationSheet,
               ),
             )
@@ -272,10 +268,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: IgnorePointer(
                 ignoring: _showLocationSheet || _showSearchResults,
                 child: MapActionButtons(
-                  onRecenter: _recenterMap,
+                  onRecenter: _onRecenter,
                   onDirections: () => debugPrint('Directions pressed'),
                   isLoading: _isLoadingLocation,
-                  onCompassPressed: _resetCompass,
+                  onCompassPressed: _onCompassPressed,
                   bearing: _mapBearing,
                   showCompass: _showCompass,
                 ),
@@ -323,8 +319,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     location: _selectedLocation,
                     isLoading: _isLoadingPlace,
                     scrollController: scrollController,
-                    onClose: _closeLocationSheet,
-                    onStartNavigation: _startNavigation,
+                    onClose: _onCloseLocationSheet,
+                    onStartNavigation: _onStartNavigation,
                   );
                 },
               ),
