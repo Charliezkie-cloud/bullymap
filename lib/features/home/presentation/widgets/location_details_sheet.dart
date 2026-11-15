@@ -1,4 +1,3 @@
-
 import 'package:bullymap/features/home/data/models/pinned_location.dart';
 import 'package:flutter/material.dart';
 
@@ -16,28 +15,15 @@ class LocationDetailsSheet extends StatelessWidget {
     required this.isLoading,
     required this.onClose,
     required this.onStartNavigation,
-    required this.scrollController
+    required this.scrollController,
   });
-
-  // Methods
-  Widget _coordinateRow(BuildContext context, String label, String value) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label),
-        SelectableText(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.w600)
-        ),
-      ],
-    );
-  }
 
   // Widget methods
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final selectedLocation = location;
 
     return Container(
       decoration: BoxDecoration(
@@ -58,32 +44,26 @@ class LocationDetailsSheet extends StatelessWidget {
           child: ListView(
             controller: scrollController,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            children: [              
-              Row(
-                children: [
-                  const Spacer(),
-                  Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: colors.outlineVariant,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: colors.outlineVariant,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const Spacer(),
-                ],
+                ),
               ),
 
-              Row(
-                children: [
-                  const Spacer(),
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(Icons.close),
-                    tooltip: 'Close',
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
+              Align(
+                alignment: Alignment.centerRight,
+                child: IconButton(
+                  onPressed: onClose,
+                  icon: const Icon(Icons.close),
+                  tooltip: 'Close',
+                  visualDensity: VisualDensity.compact,
+                ),
               ),
 
               const SizedBox(height: 12),
@@ -95,18 +75,18 @@ class LocationDetailsSheet extends StatelessWidget {
                     child: CircularProgressIndicator(),
                   ),
                 )
-              else if (location == null)
+              else if (selectedLocation == null)
                 const Text('No location information available')
               else ...[
                 Text(
-                  location!.name,
+                  selectedLocation.name,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                
+
                 Text(
-                  location!.address,
+                  selectedLocation.address,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colors.onSurfaceVariant,
                   ),
@@ -116,18 +96,16 @@ class LocationDetailsSheet extends StatelessWidget {
                 const Divider(),
                 const SizedBox(height: 12),
 
-                _coordinateRow(
-                  context,
-                  'Latitude',
-                  location!.latitude.toStringAsFixed(6),
+                _CoordinateRow(
+                  label: 'Latitude',
+                  value: selectedLocation.latitude.toStringAsFixed(6),
                 ),
 
                 const SizedBox(height: 12),
 
-                _coordinateRow(
-                  context,
-                  'Longitude',
-                  location!.longitude.toStringAsFixed(6),
+                _CoordinateRow(
+                  label: 'Longitude',
+                  value: selectedLocation.longitude.toStringAsFixed(6),
                 ),
 
                 const SizedBox(height: 24),
@@ -135,11 +113,13 @@ class LocationDetailsSheet extends StatelessWidget {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: () => onStartNavigation(location!),
+                    onPressed: () => onStartNavigation(selectedLocation),
                     icon: const Icon(Icons.navigation),
                     label: const Text('Start navigation'),
                     style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
@@ -148,6 +128,29 @@ class LocationDetailsSheet extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _CoordinateRow extends StatelessWidget {
+  // Constants
+  final String label;
+  final String value;
+
+  const _CoordinateRow({required this.label, required this.value});
+
+  // Widget methods
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label),
+        SelectableText(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+      ],
     );
   }
 }

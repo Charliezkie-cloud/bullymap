@@ -282,7 +282,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 child: MapActionButtons(
                   onCompassPressed: _onCompassPressed,
                   onRecenterPressed: _onRecenter,
-                  onDirectionsPressed: () => debugPrint('Directions pressed'),
                   mapBearing: _mapBearing,
                   showCompass: _showCompass,
                   isLoadingLocation: _isLoadingLocation,

@@ -1,13 +1,11 @@
 import 'dart:math' as math;
 
-import 'package:bullymap/features/home/presentation/widgets/directions_action_button.dart';
 import 'package:bullymap/features/home/presentation/widgets/map_fab.dart';
 import 'package:flutter/material.dart';
 
 class MapActionButtons extends StatelessWidget {
   final VoidCallback onCompassPressed;
   final VoidCallback onRecenterPressed;
-  final VoidCallback onDirectionsPressed;
 
   final double mapBearing;
   final bool showCompass;
@@ -18,7 +16,6 @@ class MapActionButtons extends StatelessWidget {
 
     required this.onCompassPressed,
     required this.onRecenterPressed,
-    required this.onDirectionsPressed,
 
     required this.mapBearing,
     required this.showCompass,
@@ -47,8 +44,8 @@ class MapActionButtons extends StatelessWidget {
           child: !isLoadingLocation
               ? const Icon(Icons.my_location)
               : const SizedBox(
-                  width: 26,
-                  height: 26,
+                  width: 24,
+                  height: 24,
                   child: CircularProgressIndicator(strokeWidth: 3),
                 ),
         ),

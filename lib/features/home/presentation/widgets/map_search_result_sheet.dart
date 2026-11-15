@@ -25,9 +25,7 @@ class MapSearchResultSheet extends StatelessWidget {
     return Material(
       color: colors.surface,
       elevation: 8,
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(24),
-      ),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
         top: false,
@@ -74,7 +72,7 @@ class MapSearchResultSheet extends StatelessWidget {
                       Text(
                         'By Nearest Location',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: colors.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -85,42 +83,61 @@ class MapSearchResultSheet extends StatelessWidget {
               const SizedBox(height: 12),
 
               Expanded(
-                child: suggestions.isEmpty
-                    ? const Center(child: Text('No results found'))
-                    : ListView.separated(
-                        controller: scrollController,
-                        itemCount: suggestions.length,
-                        padding: EdgeInsets.zero,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final item = suggestions[index];
-
-                          return ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                            leading: const Icon(Icons.place_outlined),
-                            title: Text(
-                              item.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: item.placeFormatted.isEmpty
-                                ? null
-                                : Text(
-                                    item.placeFormatted,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                            onTap: onSelected == null
-                                ? null
-                                : () => onSelected!(item),
-                          );
-                        },
-                      ),
+                child: _SearchResultList(
+                  suggestions: suggestions,
+                  scrollController: scrollController,
+                  onSelected: onSelected,
+                ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+class _SearchResultList extends StatelessWidget {
+  // Constants
+  final List<LocationSuggestion> suggestions;
+  final ScrollController scrollController;
+  final ValueChanged<LocationSuggestion>? onSelected;
+
+  const _SearchResultList({
+    required this.suggestions,
+    required this.scrollController,
+    this.onSelected,
+  });
+
+  // Widget methods
+  @override
+  Widget build(BuildContext context) {
+    if (suggestions.isEmpty) {
+      return const Center(child: Text('No results found'));
+    }
+
+    return ListView.separated(
+      controller: scrollController,
+      itemCount: suggestions.length,
+      padding: EdgeInsets.zero,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final item = suggestions[index];
+
+        return ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+          leading: const Icon(Icons.place_outlined),
+          title: Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+          subtitle: item.placeFormatted.isEmpty
+              ? null
+              : Text(
+                  item.placeFormatted,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+          onTap: onSelected == null ? null : () => onSelected!(item),
+        );
+      },
     );
   }
 }
