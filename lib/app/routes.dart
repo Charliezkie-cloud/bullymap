@@ -1,6 +1,6 @@
 abstract final class Routes {
   static const intro = '/intro';
   static const home = '/';
-  static const navigation = '/navigation';
+  static const profile = '/profile';
   static const settings = '/settings';
 }

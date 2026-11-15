@@ -1,4 +1,4 @@
-import 'package:bullymap/features/navigation/presentation/screens/navigation_screen.dart';
+import 'package:bullymap/features/profile/presentation/screens/profile_screen.dart';
 import 'package:bullymap/features/settings/presentation/screens/settings_screen.dart';
 import 'package:bullymap/features/intro/presentation/screens/intro_screen.dart';
 import 'package:bullymap/features/home/presentation/screens/home_screen.dart';
@@ -26,9 +26,9 @@ final GoRouter appRouter = GoRouter(
         StatefulShellBranch(
           routes: [
             GoRoute(
-              path: Routes.navigation,
-              name: 'navigation',
-              builder: (context, state) => const NavigationScreen(title: "Navigation")
+              path: Routes.profile,
+              name: 'profile',
+              builder: (context, state) => const ProfileScreen(title: "Profile")
             ),
           ]
         ),

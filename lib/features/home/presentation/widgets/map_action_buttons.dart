@@ -52,10 +52,6 @@ class MapActionButtons extends StatelessWidget {
                   child: CircularProgressIndicator(strokeWidth: 3),
                 ),
         ),
-
-        DirectionsActionButton(
-          onPressed: onDirectionsPressed,
-        ),
       ],
     );
   }
