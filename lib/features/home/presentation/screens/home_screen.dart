@@ -36,19 +36,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   bool _isLoadingPlace = false;
   bool _showLocationSheet = false;
   bool _showSearchResults = false;
-  bool _locationSheetOpenedFromSearch = false;
+  bool _isLocationSheetFromSearch = false;
 
   // Methods
-  void _onSearchResults(List<LocationSuggestion> result) {
+  void _onSearchResults(List<LocationSuggestion> results) {
     setState(() {
-      _searchResults = result;
+      _searchResults = results;
       _showSearchResults = true;
       _isLoadingPlace = false;
       _showLocationSheet = false;
     });
   }
 
-  Future<PinnedLocation?> _onSearchResultSelected(PinnedLocation location) {
+  Future<PinnedLocation?> _onLocationSelected(PinnedLocation location) {
     final point = Point(coordinates: Position(location.longitude, location.latitude));
 
     return MapController.dropPin(point, location: location);
@@ -107,22 +107,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _showLocationSheet = true;
       _isLoadingPlace = true;
       _selectedLocation = null;
-      _locationSheetOpenedFromSearch = false;
+      _isLocationSheetFromSearch = false;
     });
   }
 
   Future<void> _onCloseLocationSheet() async {
     setState(() {
       _showLocationSheet = false;
-      _showSearchResults = _locationSheetOpenedFromSearch;
-      _locationSheetOpenedFromSearch = false;
+      _showSearchResults = _isLocationSheetFromSearch;
+      _isLocationSheetFromSearch = false;
     });
 
     await MapController.clearPin();
   }
 
-  void _onSearchFocusChanged(bool isFocus) {
-    if (!isFocus) return;
+  void _onSearchFocusChanged(bool hasFocus) {
+    if (!hasFocus) return;
 
     setState(() {
       _showSearchResults = false;
@@ -145,18 +145,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> _onSuggestionTapped(LocationSuggestion suggestion) async {
+  Future<void> _onSearchResultTapped(LocationSuggestion suggestion) async {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _showSearchResults = false);
 
     _onPinLoading();
-    _locationSheetOpenedFromSearch = true;
+    _isLocationSheetFromSearch = true;
 
     try {
       final location = await LocationSearchService.retrieve(suggestion.mapboxId);
       if (!mounted) return;
 
-      final pinnedLocation = await _onSearchResultSelected(location);
+      final pinnedLocation = await _onLocationSelected(location);
       if (!mounted || pinnedLocation == null) return;
 
       _onMapPinned(pinnedLocation);
@@ -167,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       setState(() {
         _showLocationSheet = false;
         _isLoadingPlace = false;
-        _locationSheetOpenedFromSearch = false;
+        _isLocationSheetFromSearch = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not load place. Try again.')),
@@ -250,10 +250,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             child: Padding(
               padding: const EdgeInsets.only(top: 12, left: 16, right: 16),
               child: MapSearchBar(
-                onLocationSelected: _onSearchResultSelected,
-                onMapSearchBarResults: _onSearchResults,
-                onSearchFocused: _onSearchFocusChanged,
-                isShowSheets: _showSearchResults || _showLocationSheet,
+                onSuggestionSelected: _onSearchResultTapped,
+                onSearchResults: _onSearchResults,
+                onSearchFocusChanged: _onSearchFocusChanged,
+                isSheetOpen: _showSearchResults || _showLocationSheet,
               ),
             )
           ),
@@ -295,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     suggestions: _searchResults,
                     scrollController: scrollController,
                     onClose: () => setState(() => _showSearchResults = false),
-                    onSelected: _onSuggestionTapped
+                    onSelected: _onSearchResultTapped
                   );
                 },
               ),
