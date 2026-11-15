@@ -9,7 +9,7 @@
   <!-- White border for contrast on any map background -->
   <!-- <path d="M 24 6 L 38 38 L 24 31 L 10 38 Z" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" /> -->
   <!-- Left wing (lighter blue) -->
-  <path d="M 24 6 L 10 38 L 24 31 Z" fill="#0ea5e9" stroke="#0ea5e9" stroke-width="0.5" stroke-linejoin="round" />
+  <path d="M 24 6 L 10 38 L 24 31 Z" fill="#ef4444" stroke="#ef4444" stroke-width="0.5" stroke-linejoin="round" />
   <!-- Right wing (darker blue for 3D depth) -->
-  <path d="M 24 6 L 24 31 L 38 38 Z" fill="#3b82f6" stroke="#3b82f6" stroke-width="0.5" stroke-linejoin="round" />
+  <path d="M 24 6 L 24 31 L 38 38 Z" fill="#b91c1c" stroke="#b91c1c" stroke-width="0.5" stroke-linejoin="round" />
 </svg>

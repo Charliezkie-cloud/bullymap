@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:bullymap/core/services/location_service.dart';
 import 'package:bullymap/features/home/controllers/map_controller.dart';
@@ -27,6 +28,15 @@ class NavigationController {
   static int _currentStepIndex = 0;
   static bool _hasAnnouncedCurrentStep = false;
   static bool _recenterToggle = false;
+  static List<Offset>? _routePoints;
+  static List<double>? _routeDistances;
+  static double _routeOriginLat = 0.0;
+  static double _routeOriginLng = 0.0;
+  static double _metersPerDegreeLat = 0.0;
+  static double _metersPerDegreeLng = 0.0;
+  static int _trimSegmentIndex = 0;
+  static double _trimmedDistance = 0.0;
+  static const double _maxTrimDeviationMeters = 50.0;
 
   // Methods
   static Future<void> startNavigation(PinnedLocation destination) async {
@@ -55,6 +65,7 @@ class NavigationController {
         currentStep.value = route.steps.first;
       }
 
+      _prepareRouteGeometry(route);
       await _renderRoute(route);
       isNavigating.value = true;
       recenterCamera();
@@ -97,6 +108,10 @@ class NavigationController {
     remainingDuration.value = 0.0;
     _currentStepIndex = 0;
     _hasAnnouncedCurrentStep = false;
+    _routePoints = null;
+    _routeDistances = null;
+    _trimSegmentIndex = 0;
+    _trimmedDistance = 0.0;
 
     MapController.viewportController?.moveTo(
       FollowPuckViewportState(
@@ -130,6 +145,8 @@ class NavigationController {
   ) {
     final route = activeRoute.value;
     if (route == null || route.steps.isEmpty) return;
+
+    _updateRouteTrim(currentPosition);
 
     final distanceToDest = geo.Geolocator.distanceBetween(
       currentPosition.latitude,
@@ -192,6 +209,91 @@ class NavigationController {
         lineJoin: LineJoin.ROUND,
       ),
     );
+
+    // Trim color is the only way to grey out the traveled line; Mapbox still
+    // marks it experimental, but trim offset is stable and already in use.
+    // ignore: experimental_member_use
+    await _polylineManager?.setLineTrimColor(
+      const Color(0xFF9AA0A6).toARGB32(),
+    );
+    await _polylineManager?.setLineTrimOffset(<double?>[0.0, 0.0]);
+  }
+
+  static void _prepareRouteGeometry(NavigationRoute route) {
+    final geometry = route.geometry;
+    _routePoints = null;
+    _routeDistances = null;
+    _trimSegmentIndex = 0;
+    _trimmedDistance = 0.0;
+    if (geometry.length < 2) return;
+
+    final origin = geometry.first;
+    _routeOriginLat = origin.lat.toDouble();
+    _routeOriginLng = origin.lng.toDouble();
+    _metersPerDegreeLat = 110574.0;
+    _metersPerDegreeLng = 111320.0 * math.cos(_routeOriginLat * math.pi / 180);
+
+    final points = geometry
+        .map(
+          (point) => Offset(
+            (point.lng.toDouble() - _routeOriginLng) * _metersPerDegreeLng,
+            (point.lat.toDouble() - _routeOriginLat) * _metersPerDegreeLat,
+          ),
+        )
+        .toList();
+
+    final distances = List<double>.filled(points.length, 0.0);
+    for (var i = 1; i < points.length; i++) {
+      distances[i] = distances[i - 1] + (points[i] - points[i - 1]).distance;
+    }
+
+    _routePoints = points;
+    _routeDistances = distances;
+  }
+
+  static void _updateRouteTrim(geo.Position position) {
+    final points = _routePoints;
+    final distances = _routeDistances;
+    final manager = _polylineManager;
+    if (points == null || distances == null || manager == null) return;
+
+    final totalDistance = distances.last;
+    if (totalDistance <= 0) return;
+
+    final target = Offset(
+      (position.longitude - _routeOriginLng) * _metersPerDegreeLng,
+      (position.latitude - _routeOriginLat) * _metersPerDegreeLat,
+    );
+
+    var nearestDeviation = double.infinity;
+    var nearestAlong = _trimmedDistance;
+    var nearestIndex = _trimSegmentIndex;
+    for (var i = _trimSegmentIndex; i < points.length - 1; i++) {
+      final start = points[i];
+      final segment = points[i + 1] - start;
+      final segmentLengthSquared =
+          segment.dx * segment.dx + segment.dy * segment.dy;
+      if (segmentLengthSquared == 0) continue;
+
+      final toTarget = target - start;
+      final t =
+          ((toTarget.dx * segment.dx + toTarget.dy * segment.dy) /
+                  segmentLengthSquared)
+              .clamp(0.0, 1.0);
+      final deviation = (target - (start + segment * t)).distance;
+      if (deviation >= nearestDeviation) continue;
+
+      nearestDeviation = deviation;
+      nearestIndex = i;
+      nearestAlong = distances[i] + (distances[i + 1] - distances[i]) * t;
+    }
+
+    if (nearestDeviation > _maxTrimDeviationMeters) return;
+    if (nearestAlong <= _trimmedDistance) return;
+
+    _trimSegmentIndex = nearestIndex;
+    _trimmedDistance = nearestAlong;
+    manager.setLineTrimOffset(<double?>[0.0, nearestAlong / totalDistance]);
   }
 
   static Future<void> _clearRoute() async {
