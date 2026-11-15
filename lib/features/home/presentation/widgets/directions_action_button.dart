@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class DirectionsActionButton extends StatelessWidget {
-  // Constants
   final VoidCallback onPressed;
 
   const DirectionsActionButton({
@@ -9,7 +8,6 @@ class DirectionsActionButton extends StatelessWidget {
     required this.onPressed,
   });
 
-  // Widget methods
   @override
   Widget build(BuildContext context) {
     return FloatingActionButton(

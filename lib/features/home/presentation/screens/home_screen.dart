@@ -48,10 +48,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     });
   }
 
-  Future<PinnedLocation?> _onLocationSelected(PinnedLocation location) {
+  Future<PinnedLocation?> _onLocationSelected(PinnedLocation location) async {
     final point = Point(coordinates: Position(location.longitude, location.latitude));
+    final pinnedLocation = MapController.dropPin(point, location: location);
 
-    return MapController.dropPin(point, location: location);
+    // The viewport controller stays in FollowPuckViewportState after the
+    // initial location fix, so map.easeTo alone gets overridden on the next
+    // puck update. Move the controller to keep the pin in view.
+    MapController.viewportController?.moveTo(
+      CameraViewportState(center: point, zoom: 16),
+      transition: const FlyViewportTransition(
+        duration: Duration(milliseconds: 1000),
+      ),
+    );
+
+    return pinnedLocation;
   }
 
   void _onMapPinned(PinnedLocation location) {
@@ -146,11 +157,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _onSearchResultTapped(LocationSuggestion suggestion) async {
+    final openedFromSearchResults = _showSearchResults;
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _showSearchResults = false);
 
     _onPinLoading();
-    _isLocationSheetFromSearch = true;
+    _isLocationSheetFromSearch = openedFromSearchResults;
 
     try {
       final location = await LocationSearchService.retrieve(suggestion.mapboxId);
@@ -268,12 +280,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: IgnorePointer(
                 ignoring: _showLocationSheet || _showSearchResults,
                 child: MapActionButtons(
-                  onRecenter: _onRecenter,
-                  onDirections: () => debugPrint('Directions pressed'),
-                  isLoading: _isLoadingLocation,
                   onCompassPressed: _onCompassPressed,
-                  bearing: _mapBearing,
+                  onRecenterPressed: _onRecenter,
+                  onDirectionsPressed: () => debugPrint('Directions pressed'),
+                  mapBearing: _mapBearing,
                   showCompass: _showCompass,
+                  isLoadingLocation: _isLoadingLocation,
                 ),
               ),
             ),

@@ -172,13 +172,13 @@ class _MapSearchBarState extends State<MapSearchBar> {
     FocusScope.of(context).unfocus();
     _searchController.text = suggestion.name;
 
-    final shownSuggestions = _suggestions;
     setState(() {
       _suggestions = [];
       _isSearching = false;
     });
 
-    widget.onSearchResults(shownSuggestions);
+    // The results sheet is not populated here: closing the details sheet
+    // must close everything instead of reopening the results sheet.
     widget.onSuggestionSelected(suggestion);
   }
 

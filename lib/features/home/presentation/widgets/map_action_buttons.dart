@@ -5,30 +5,26 @@ import 'package:bullymap/features/home/presentation/widgets/map_fab.dart';
 import 'package:flutter/material.dart';
 
 class MapActionButtons extends StatelessWidget {
-  // Constants
-  final VoidCallback onRecenter;
-  final VoidCallback onDirections;
-  final bool isLoading;
-
-  // Compass constants
-  final double bearing;
   final VoidCallback onCompassPressed;
+  final VoidCallback onRecenterPressed;
+  final VoidCallback onDirectionsPressed;
+
+  final double mapBearing;
   final bool showCompass;
+  final bool isLoadingLocation;
 
   const MapActionButtons({
     super.key,
 
-    required this.onRecenter,
-    required this.onDirections,
-
-    required this.bearing,
     required this.onCompassPressed,
-    required this.showCompass,
+    required this.onRecenterPressed,
+    required this.onDirectionsPressed,
 
-    this.isLoading = false,
+    required this.mapBearing,
+    required this.showCompass,
+    this.isLoadingLocation = false,
   });
 
-  // Widget methods
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -40,25 +36,27 @@ class MapActionButtons extends StatelessWidget {
             tooltip: 'Reset north',
             onPressed: onCompassPressed,
             child: Transform.rotate(
-              angle: -bearing * math.pi / 180,
+              angle: -mapBearing * math.pi / 180,
               child: const Icon(Icons.navigation, color: Colors.red),
             ),
           ),
 
         MapFab(
-          tooltip: "Recenter",
-          onPressed: !isLoading ? onRecenter : null,
-          child: !isLoading ? const Icon(Icons.my_location) : SizedBox(
-            height: 26,
-            width: 26,
-            child: const CircularProgressIndicator(strokeWidth: 3)
-          )
+          tooltip: 'Recenter',
+          onPressed: !isLoadingLocation ? onRecenterPressed : null,
+          child: !isLoadingLocation
+              ? const Icon(Icons.my_location)
+              : const SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
         ),
 
         DirectionsActionButton(
-          onPressed: onDirections,
+          onPressed: onDirectionsPressed,
         ),
-      ]
+      ],
     );
   }
 }

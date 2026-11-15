@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
 
 class MapFab extends StatelessWidget {
-  // Constants
   final VoidCallback? onPressed;
   final Widget child;
   final String tooltip;
-  final double size;
-  
+  final double diameter;
+
   const MapFab({
     super.key,
     required this.onPressed,
     required this.child,
     required this.tooltip,
-    this.size = 44,
+    this.diameter = 44,
   });
 
-  // Widget methods
   @override
   Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: scheme.surface,
+        color: colorScheme.surface,
         shape: const CircleBorder(),
         elevation: 4,
         shadowColor: Colors.black54,
@@ -30,8 +29,8 @@ class MapFab extends StatelessWidget {
           customBorder: const CircleBorder(),
           onTap: onPressed,
           child: SizedBox(
-            width: size,
-            height: size,
+            width: diameter,
+            height: diameter,
             child: Center(child: child),
           ),
         ),
