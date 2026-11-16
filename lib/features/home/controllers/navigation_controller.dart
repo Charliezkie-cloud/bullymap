@@ -5,6 +5,7 @@ import 'package:bullymap/core/services/location_service.dart';
 import 'package:bullymap/features/home/controllers/map_controller.dart';
 import 'package:bullymap/features/home/data/services/directions_service.dart';
 import 'package:bullymap/features/home/data/services/navigation_audio_service.dart';
+import 'package:bullymap/features/home/data/services/navigation_voice_service.dart';
 import 'package:bullymap/features/home/data/models/navigation_route.dart';
 import 'package:bullymap/features/home/data/models/navigation_step.dart';
 import 'package:bullymap/features/home/data/models/pinned_location.dart';
@@ -37,6 +38,12 @@ class NavigationController {
   static int _trimSegmentIndex = 0;
   static double _trimmedDistance = 0.0;
   static const double _maxTrimDeviationMeters = 50.0;
+  static const double _offRouteDeviationMeters = 50.0;
+  static const int _offRouteSamplesForReroute = 3;
+  static const Duration _rerouteCooldown = Duration(seconds: 10);
+  static int _offRouteSamples = 0;
+  static bool _isRerouting = false;
+  static DateTime? _lastRerouteAt;
 
   // Methods
   static Future<void> startNavigation(PinnedLocation destination) async {
@@ -60,6 +67,8 @@ class NavigationController {
       remainingDuration.value = route.duration;
       _currentStepIndex = 0;
       _hasAnnouncedCurrentStep = false;
+      _offRouteSamples = 0;
+      _lastRerouteAt = null;
 
       if (route.steps.isNotEmpty) {
         currentStep.value = route.steps.first;
@@ -74,6 +83,8 @@ class NavigationController {
         await NavigationAudioService.announce(route.steps.first);
         _hasAnnouncedCurrentStep = true;
       }
+
+      NavigationVoiceService.startCommentary();
 
       _startPositionTracking(destination);
     } finally {
@@ -99,6 +110,8 @@ class NavigationController {
     await _positionSubscription?.cancel();
     _positionSubscription = null;
 
+    await NavigationVoiceService.stopCommentary();
+
     await _clearRoute();
 
     isNavigating.value = false;
@@ -112,6 +125,9 @@ class NavigationController {
     _routeDistances = null;
     _trimSegmentIndex = 0;
     _trimmedDistance = 0.0;
+    _offRouteSamples = 0;
+    _isRerouting = false;
+    _lastRerouteAt = null;
 
     MapController.viewportController?.moveTo(
       FollowPuckViewportState(
@@ -139,14 +155,11 @@ class NavigationController {
         });
   }
 
-  static void _onPositionUpdate(
-    geo.Position currentPosition,
-    PinnedLocation destination,
-  ) {
+  static void _onPositionUpdate(geo.Position currentPosition, PinnedLocation destination) {
     final route = activeRoute.value;
     if (route == null || route.steps.isEmpty) return;
 
-    _updateRouteTrim(currentPosition);
+    final deviation = _updateRouteTrim(currentPosition);
 
     final distanceToDest = geo.Geolocator.distanceBetween(
       currentPosition.latitude,
@@ -165,6 +178,8 @@ class NavigationController {
       stopNavigation();
       return;
     }
+
+    _trackOffRoute(currentPosition, destination, deviation);
 
     if (_currentStepIndex < route.steps.length) {
       final targetStep = route.steps[_currentStepIndex];
@@ -251,14 +266,13 @@ class NavigationController {
     _routeDistances = distances;
   }
 
-  static void _updateRouteTrim(geo.Position position) {
+  static double? _updateRouteTrim(geo.Position position) {
     final points = _routePoints;
     final distances = _routeDistances;
-    final manager = _polylineManager;
-    if (points == null || distances == null || manager == null) return;
+    if (points == null || distances == null || points.length < 2) return null;
 
     final totalDistance = distances.last;
-    if (totalDistance <= 0) return;
+    if (totalDistance <= 0) return null;
 
     final target = Offset(
       (position.longitude - _routeOriginLng) * _metersPerDegreeLng,
@@ -288,12 +302,97 @@ class NavigationController {
       nearestAlong = distances[i] + (distances[i + 1] - distances[i]) * t;
     }
 
-    if (nearestDeviation > _maxTrimDeviationMeters) return;
-    if (nearestAlong <= _trimmedDistance) return;
+    if (!nearestDeviation.isFinite) return null;
+
+    final manager = _polylineManager;
+    if (manager == null ||
+        nearestDeviation > _maxTrimDeviationMeters ||
+        nearestAlong <= _trimmedDistance) {
+      return nearestDeviation;
+    }
 
     _trimSegmentIndex = nearestIndex;
     _trimmedDistance = nearestAlong;
     manager.setLineTrimOffset(<double?>[0.0, nearestAlong / totalDistance]);
+    return nearestDeviation;
+  }
+
+  static void _trackOffRoute(geo.Position position, PinnedLocation destination, double? deviation) {
+    if (deviation == null || _isRerouting) return;
+
+    if (deviation <= _offRouteDeviationMeters) {
+      _offRouteSamples = 0;
+      return;
+    }
+
+    _offRouteSamples++;
+    if (_offRouteSamples < _offRouteSamplesForReroute) return;
+
+    // Mapbox bills each Directions request, so reroutes are rate-limited.
+    final lastRerouteAt = _lastRerouteAt;
+    if (lastRerouteAt != null &&
+        DateTime.now().difference(lastRerouteAt) < _rerouteCooldown) {
+      return;
+    }
+
+    _offRouteSamples = 0;
+    unawaited(_reroute(position, destination));
+  }
+
+  static Future<void> _reroute(geo.Position position, PinnedLocation destination) async {
+    _isRerouting = true;
+    _lastRerouteAt = DateTime.now();
+    final routeBeingReplaced = activeRoute.value;
+
+    try {
+      // Await the scolding so the reroute's first maneuver prompt does not
+      // cut it off; it names the turn the driver was supposed to make.
+      await NavigationAudioService.announceWrongTurn(currentStep.value);
+
+      final route = await DirectionsService.getDrivingRoute(
+        originLat: position.latitude,
+        originLng: position.longitude,
+        destLat: destination.latitude,
+        destLng: destination.longitude,
+      );
+      // Navigation may have stopped or restarted while the request was in flight.
+      if (route == null ||
+          !isNavigating.value ||
+          !identical(activeRoute.value, routeBeingReplaced)) {
+        return;
+      }
+
+      activeRoute.value = route;
+      remainingDistance.value = route.distance;
+      remainingDuration.value = route.duration;
+      _currentStepIndex = 0;
+      _hasAnnouncedCurrentStep = false;
+      currentStep.value = route.steps.isNotEmpty ? route.steps.first : null;
+
+      _prepareRouteGeometry(route);
+      await _renderRoute(route);
+
+      if (!isNavigating.value) {
+        await _clearRoute();
+        return;
+      }
+
+      await _announceUpcomingManeuver(route);
+    } catch (error) {
+      debugPrint('[Navigation] Reroute failed: $error');
+    } finally {
+      _isRerouting = false;
+    }
+  }
+
+  static Future<void> _announceUpcomingManeuver(NavigationRoute route) async {
+    if (route.steps.isEmpty) return;
+
+    final step = route.steps.firstWhere((candidate) {
+      final modifier = candidate.modifier?.toLowerCase() ?? '';
+      return modifier.contains('left') || modifier.contains('right');
+    }, orElse: () => route.steps.first);
+    await NavigationAudioService.announce(step);
   }
 
   static Future<void> _clearRoute() async {

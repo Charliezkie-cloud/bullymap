@@ -42,6 +42,7 @@ dependencies:
   uuid: ^4.6.0
   speech_to_text: ^7.5.0
   flutter_svg: ^2.3.2
+  audioplayers: ^6.8.1
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +69,17 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/map/
+    - assets/audio/english/david/comments/
+    - assets/audio/english/david/destination_arrived/
+    - assets/audio/english/david/turn_left/
+    - assets/audio/english/david/turn_right/
+    - assets/audio/english/david/warning/
+    - assets/audio/english/david/wrong_turns/
+    - assets/audio/english/yas/comments/
+    - assets/audio/english/yas/destination_arrived/
+    - assets/audio/english/yas/just_got_in_car/
+    - assets/audio/english/yas/turn_right/
+    - assets/audio/english/yas/wrong_turns/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
