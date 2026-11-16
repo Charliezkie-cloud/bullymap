@@ -15,6 +15,7 @@ class MapSearchBar extends StatefulWidget {
   final ValueChanged<bool> onSearchFocusChanged;
   final ValueChanged<List<LocationSuggestion>> onSearchResults;
   final bool isSheetOpen;
+  static final FocusNode _searchFocusNode = FocusNode();
 
   const MapSearchBar({
     super.key,
@@ -23,6 +24,9 @@ class MapSearchBar extends StatefulWidget {
     required this.onSearchFocusChanged,
     this.isSheetOpen = false,
   });
+
+  // Methods
+  static void focusSearchField() => _searchFocusNode.requestFocus();
 
   // Widget methods
   @override
@@ -34,7 +38,7 @@ class _MapSearchBarState extends State<MapSearchBar> {
   static const _minQueryLength = 2;
   static const _searchDebounce = Duration(milliseconds: 1000);
 
-  final FocusNode _focusNode = FocusNode();
+  final FocusNode _focusNode = MapSearchBar._searchFocusNode;
   final TextEditingController _searchController = TextEditingController();
   final SpeechToText _speech = SpeechToText();
 
@@ -256,7 +260,6 @@ class _MapSearchBarState extends State<MapSearchBar> {
     _speech.cancel();
     _searchController.dispose();
     _focusNode.removeListener(_onFocusChanged);
-    _focusNode.dispose();
 
     super.dispose();
   }

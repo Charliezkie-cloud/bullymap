@@ -17,6 +17,7 @@ class NavigationController {
   // Notifiers
   static final ValueNotifier<bool> isNavigating = ValueNotifier(false);
   static final ValueNotifier<bool> isLoading = ValueNotifier(false);
+  static final ValueNotifier<bool> hasArrived = ValueNotifier(false);
   static final ValueNotifier<NavigationRoute?> activeRoute = ValueNotifier(null);
   static final ValueNotifier<NavigationStep?> currentStep = ValueNotifier(null);
   static final ValueNotifier<double> remainingDistance = ValueNotifier(0.0);
@@ -65,6 +66,7 @@ class NavigationController {
       activeRoute.value = route;
       remainingDistance.value = route.distance;
       remainingDuration.value = route.duration;
+      hasArrived.value = false;
       _currentStepIndex = 0;
       _hasAnnouncedCurrentStep = false;
       _offRouteSamples = 0;
@@ -170,12 +172,7 @@ class NavigationController {
     remainingDistance.value = distanceToDest;
 
     if (distanceToDest < 20.0) {
-      final arrivalStep = route.steps.lastWhere(
-        (s) => s.type?.toLowerCase() == 'arrive',
-        orElse: () => route.steps.last,
-      );
-      NavigationAudioService.announce(arrivalStep);
-      stopNavigation();
+      _onArrived(route);
       return;
     }
 
@@ -203,6 +200,24 @@ class NavigationController {
         }
       }
     }
+  }
+
+  // Navigation stays "active" after arrival so the HUD can show the arrival
+  // actions; stopping happens only when the driver exits.
+  static void _onArrived(NavigationRoute route) {
+    final arrivalStep = route.steps.lastWhere(
+      (s) => s.type?.toLowerCase() == 'arrive',
+      orElse: () => route.steps.last,
+    );
+    currentStep.value = arrivalStep;
+    remainingDistance.value = 0.0;
+    remainingDuration.value = 0.0;
+    hasArrived.value = true;
+
+    unawaited(_positionSubscription?.cancel());
+    _positionSubscription = null;
+    unawaited(NavigationVoiceService.stopCommentary());
+    NavigationAudioService.announce(arrivalStep);
   }
 
   static Future<void> _renderRoute(NavigationRoute route) async {

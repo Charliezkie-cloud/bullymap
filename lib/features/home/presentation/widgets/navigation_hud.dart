@@ -2,6 +2,7 @@ import 'package:bullymap/features/home/controllers/navigation_controller.dart';
 import 'package:bullymap/features/home/data/models/navigation_route.dart';
 import 'package:bullymap/features/home/data/models/navigation_step.dart';
 import 'package:bullymap/features/home/data/services/navigation_voice_service.dart';
+import 'package:bullymap/features/home/presentation/widgets/map_search_bar.dart';
 import 'package:flutter/material.dart';
 
 class NavigationHud extends StatefulWidget {
@@ -57,6 +58,12 @@ class _NavigationHudState extends State<NavigationHud>
       if (NavigationController.isNavigating.value) return;
       setState(() => _isVisible = false);
     });
+  }
+
+  Future<void> _onNavigateAgain() async {
+    await NavigationController.stopNavigation();
+    if (!mounted) return;
+    MapSearchBar.focusSearchField();
   }
 
   // Widget methods
@@ -116,7 +123,12 @@ class _NavigationHudState extends State<NavigationHud>
                   horizontal: 12,
                   vertical: 8,
                 ),
-                child: ValueListenableBuilder<NavigationStep?>(
+                child: ValueListenableBuilder<bool>(
+                  valueListenable: NavigationController.hasArrived,
+                  builder: (context, hasArrived, _) {
+                    if (hasArrived) return const _ArrivedBanner();
+
+                    return ValueListenableBuilder<NavigationStep?>(
                   valueListenable: NavigationController.currentStep,
                   builder: (context, currentStep, _) {
                     final step = currentStep ?? _lastStep;
@@ -171,6 +183,8 @@ class _NavigationHudState extends State<NavigationHud>
                       ),
                     );
                   },
+                );
+                  },
                 ),
               ),
             ),
@@ -197,7 +211,16 @@ class _NavigationHudState extends State<NavigationHud>
                       horizontal: 20,
                       vertical: 16,
                     ),
-                    child: ValueListenableBuilder<NavigationRoute?>(
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: NavigationController.hasArrived,
+                      builder: (context, hasArrived, _) {
+                        if (hasArrived) {
+                          return _ArrivedActions(
+                            onNavigateAgain: _onNavigateAgain,
+                          );
+                        }
+
+                        return ValueListenableBuilder<NavigationRoute?>(
                       valueListenable: NavigationController.activeRoute,
                       builder: (context, activeRoute, _) {
                         final route = activeRoute ?? _lastRoute;
@@ -283,12 +306,105 @@ class _NavigationHudState extends State<NavigationHud>
                           },
                         );
                       },
+                    );
+                      },
                     ),
                   ),
                 ),
               ),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ArrivedBanner extends StatelessWidget {
+  const _ArrivedBanner();
+
+  // Widget methods
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(16),
+      color: const Color(0xFF15803D),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
+              color: Colors.white,
+              size: 40,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Text(
+                    'Arrived!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'You have reached your destination.',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ArrivedActions extends StatelessWidget {
+  // Constants
+  final VoidCallback onNavigateAgain;
+
+  const _ArrivedActions({required this.onNavigateAgain});
+
+  // Widget methods
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: onNavigateAgain,
+            icon: const Icon(Icons.navigation_rounded),
+            label: const Text('Navigate again'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        IconButton.filled(
+          onPressed: NavigationController.stopNavigation,
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.red.shade600,
+            foregroundColor: Colors.white,
+          ),
+          icon: const Icon(Icons.close),
+          tooltip: 'Exit navigation',
         ),
       ],
     );
