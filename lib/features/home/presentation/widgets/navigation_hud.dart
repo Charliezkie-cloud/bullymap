@@ -1,6 +1,7 @@
 import 'package:bullymap/features/home/controllers/navigation_controller.dart';
 import 'package:bullymap/features/home/data/models/navigation_route.dart';
 import 'package:bullymap/features/home/data/models/navigation_step.dart';
+import 'package:bullymap/features/home/data/services/navigation_voice_service.dart';
 import 'package:flutter/material.dart';
 
 class NavigationHud extends StatefulWidget {
@@ -243,6 +244,25 @@ class _NavigationHudState extends State<NavigationHud>
                                     ],
                                   ),
                                 ),
+                                ValueListenableBuilder<bool>(
+                                  valueListenable:
+                                      NavigationVoiceService.isMuted,
+                                  builder: (context, isMuted, _) {
+                                    return IconButton.filledTonal(
+                                      onPressed:
+                                          NavigationVoiceService.toggleMute,
+                                      icon: Icon(
+                                        isMuted
+                                            ? Icons.volume_off_rounded
+                                            : Icons.volume_up_rounded,
+                                      ),
+                                      tooltip: isMuted
+                                          ? 'Unmute voice'
+                                          : 'Mute voice',
+                                    );
+                                  },
+                                ),
+                                const SizedBox(width: 8),
                                 IconButton.filledTonal(
                                   onPressed: NavigationController.recenterCamera,
                                   icon: const Icon(Icons.navigation_rounded),

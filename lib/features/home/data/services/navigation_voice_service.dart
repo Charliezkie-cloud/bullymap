@@ -25,6 +25,9 @@ class NavigationVoiceService {
     },
   };
 
+  // Notifiers
+  static final ValueNotifier<bool> isMuted = ValueNotifier(false);
+
   // States
   static String _voice = 'david';
   static final Map<String, List<String>> _folderAssets = {};
@@ -43,6 +46,14 @@ class NavigationVoiceService {
   // Methods
   static void setVoice(String voice) {
     _voice = voice;
+  }
+
+  static Future<void> toggleMute() async {
+    isMuted.value = !isMuted.value;
+    if (!isMuted.value) return;
+
+    _isCommentaryPlaying = false;
+    await _player.stop();
   }
 
   static Future<String?> pickAssetPath(NavigationStep step) async {
@@ -113,6 +124,8 @@ class NavigationVoiceService {
   }
 
   static Future<void> _playStartLine() async {
+    if (isMuted.value) return;
+
     final folder = _voiceFolders[_voice]?['start'];
     if (folder == null) return;
 
@@ -141,6 +154,8 @@ class NavigationVoiceService {
   }
 
   static Future<void> _playCommentaryIfIdle() async {
+    if (isMuted.value) return;
+
     // Turn prompts own the shared player while they play, so commentary skips
     // instead of talking over them.
     if (_player.state == PlayerState.playing) return;
@@ -167,6 +182,8 @@ class NavigationVoiceService {
   }
 
   static Future<void> play(String assetPath, String fallbackText) async {
+    if (isMuted.value) return;
+
     _lastGuidanceAt = DateTime.now();
     _isCommentaryPlaying = false;
     try {
@@ -179,6 +196,8 @@ class NavigationVoiceService {
   }
 
   static Future<void> playAndWait(String assetPath, String fallbackText) async {
+    if (isMuted.value) return;
+
     _lastGuidanceAt = DateTime.now();
     _isCommentaryPlaying = false;
     try {
